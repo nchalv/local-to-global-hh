@@ -1,0 +1,13 @@
+.hh-venv/
+__pycache__/
+*.py[cod]
+
+evaluator/build/
+generator/generated/
+generator/logs/
+data_preparation/generated/
+data_preparation/plots/
+results/raw/
+results/runs/
+results/plots/
+*.log

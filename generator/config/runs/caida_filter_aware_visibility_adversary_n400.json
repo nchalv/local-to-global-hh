@@ -1,0 +1,5 @@
+{
+  "generation": "../generation/caida_200w_5s_n400_m100_counts.json",
+  "scenario": "../scenarios/default.json",
+  "partitioning": "../partitioning/caida_filter_aware_visibility_adversary_n400.json"
+}

@@ -1,0 +1,5 @@
+{
+  "generation": "../generation/dynamic_mixed_heavy_tail_caida_churn_n800_m100_counts.json",
+  "scenario": "../scenarios/default.json",
+  "partitioning": "../partitioning/filter_aware_visibility_threshold07_n800.json"
+}

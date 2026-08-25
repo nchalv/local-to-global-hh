@@ -1,0 +1,22 @@
+{
+  "seed": 7319,
+  "window_size": 0,
+  "num_keys": 0,
+  "n": 400,
+  "m": 100,
+  "output_dir": "generated",
+  "stream_file": "stream_dynamic_mixed_heavy_tail_caida_churn_n400_m100.pkl.gz",
+  "summary_file": "summary_dynamic_mixed_heavy_tail_caida_churn_n400_m100.pkl.gz",
+  "stream_json_file": "stream_dynamic_mixed_heavy_tail_caida_churn_n400_m100.json.gz",
+  "plot_format": "png",
+  "plot_distr": false,
+  "plot_skew": false,
+  "hot_key_drift_pct": 0,
+  "top_n_churn_pct": 0,
+  "max_rel_freq_delta_pct": 100,
+  "new_key_pct": 0,
+  "newborn_hot_birth_prob": 0.0,
+  "max_hot_newborn_frac": 0.0,
+  "save_windows_separately": true,
+  "expand_streams": false
+}

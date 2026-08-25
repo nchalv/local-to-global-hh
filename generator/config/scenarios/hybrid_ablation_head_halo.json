@@ -1,0 +1,22 @@
+[
+  {
+    "type": "multi_resolution_head_halo",
+    "duration": 110,
+    "n": 200,
+    "params": {
+      "threshold_ns": [100, 200, 400],
+      "hh_counts": [3, 6, 12],
+      "near_counts": [4, 8, 16],
+      "oscillating_counts": [3, 6, 12],
+      "hh_min_ratio": 1.03,
+      "hh_max_ratio": 1.12,
+      "near_min_ratio": 0.88,
+      "near_max_ratio": 0.98,
+      "oscillation_amplitude": 0.04,
+      "oscillation_period": 28,
+      "stable_drift_amplitude": 0.004,
+      "background_keys": 14900,
+      "seed": 4242
+    }
+  }
+]

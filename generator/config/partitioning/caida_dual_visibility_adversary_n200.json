@@ -1,0 +1,11 @@
+{
+  "policy": "dual_visibility_adversary",
+  "top_n": 200,
+  "validate_count_preservation": true,
+  "dva_local_threshold_scale": 0.7,
+  "dva_competition_width_ratio": 1.0,
+  "dva_max_partition_load_ratio": 4.0,
+  "dva_large_partition_count": 1,
+  "dva_hh_overflow_reporters": 1,
+  "dva_print_diagnostics": true
+}

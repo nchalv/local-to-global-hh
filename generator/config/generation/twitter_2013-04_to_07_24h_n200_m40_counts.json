@@ -1,0 +1,21 @@
+{
+  "seed": 4242,
+  "window_size": 0,
+  "num_keys": 0,
+  "n": 200,
+  "m": 40,
+  "output_dir": "generated",
+  "stream_file": "stream_twitter_2013-04_to_07_24h_n200_m40.pkl.gz",
+  "summary_file": "summary_twitter_2013-04_to_07_24h_n200_m40.pkl.gz",
+  "stream_json_file": "stream_twitter_2013-04_to_07_24h_n200_m40.json.gz",
+  "plot_format": "png",
+  "plot_distr": false,
+  "plot_skew": false,
+  "hot_key_drift_pct": 0,
+  "max_rel_freq_delta_pct": 0,
+  "new_key_pct": 0,
+  "newborn_hot_birth_prob": 0.0,
+  "max_hot_newborn_frac": 0.0,
+  "save_windows_separately": true,
+  "expand_streams": false
+}

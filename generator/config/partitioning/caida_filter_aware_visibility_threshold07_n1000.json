@@ -1,0 +1,11 @@
+{
+  "policy": "filter_aware_visibility_adversary",
+  "top_n": 1000,
+  "validate_count_preservation": true,
+  "fva_local_threshold_scale": 0.7,
+  "fva_competition_width_ratio": 1.0,
+  "fva_max_partition_load_ratio": 4.0,
+  "fva_large_partition_count": 1,
+  "fva_hh_overflow_reporters": 1,
+  "fva_print_diagnostics": true
+}

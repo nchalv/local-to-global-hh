@@ -1,0 +1,290 @@
+import argparse
+from datetime import datetime
+import json
+from pathlib import Path
+import shutil
+
+from data.generate_data import prepare_and_store_data
+
+
+CONFIG_DIR = Path(__file__).resolve().parent / "config"
+DEFAULT_RUN_CONFIG = CONFIG_DIR / "runs" / "default.json"
+
+
+def _load_json(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _slug(value):
+    text = str(value)
+    out = "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in text).strip("_")
+    return out or "run"
+
+
+def _unique_run_dir(output_root, run_name):
+    base = output_root / "runs" / run_name
+    path = base
+    suffix = 1
+    while path.exists():
+        path = output_root / "runs" / f"{run_name}_{suffix:02d}"
+        suffix += 1
+    return path
+
+
+def _resolve_path(path, base_dir):
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return candidate
+    return (base_dir / candidate).resolve()
+
+
+def _load_component(value, base_dir):
+    if isinstance(value, dict):
+        return value, None
+    if value is None:
+        return {}, None
+    path = _resolve_path(value, base_dir)
+    return _load_json(path), path
+
+
+def _load_run_configuration(args):
+    """Load the separated generation, partitioning, and scenario configs."""
+    run_config_path = Path(args.run_config).resolve()
+    run_config = _load_json(run_config_path)
+    run_base = run_config_path.parent
+
+    generation_ref = args.generation or run_config.get("generation")
+    partitioning_ref = args.partitioning or run_config.get("partitioning")
+    scenario_ref = args.scenario or run_config.get("scenario")
+
+    generation_base = Path.cwd() if args.generation else run_base
+    partitioning_base = Path.cwd() if args.partitioning else run_base
+    scenario_base = Path.cwd() if args.scenario else run_base
+
+    generation_config, generation_path = _load_component(generation_ref, generation_base)
+    partitioning_config, partitioning_path = _load_component(partitioning_ref, partitioning_base)
+    scenario, scenario_path = ([], None)
+    if not args.real_counts:
+        scenario, scenario_path = _load_component(scenario_ref, scenario_base)
+
+    return {
+        "mode": "composed",
+        "run_config_path": run_config_path,
+        "generation_config": generation_config,
+        "generation_path": generation_path,
+        "partitioning_config": partitioning_config,
+        "partitioning_path": partitioning_path,
+        "scenario": scenario,
+        "scenario_path": scenario_path,
+    }
+
+
+def _copy_or_write_config(config_dir, name, data, source_path):
+    """Snapshot the exact config used for a run, including inline overrides."""
+    dest = config_dir / name
+    if source_path:
+        shutil.copy2(source_path, dest)
+    else:
+        with open(dest, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+
+def _collect_scenario_n_values(scenario):
+    values = []
+
+    def add(path, value):
+        if value is not None:
+            values.append((path, int(value)))
+
+    for idx, step in enumerate(scenario or []):
+        prefix = f"scenario[{idx}]"
+        add(f"{prefix}.n", step.get("n"))
+        params = step.get("params", {})
+        if isinstance(params, dict):
+            add(f"{prefix}.params.n", params.get("n"))
+        transition = step.get("transition", {})
+        if isinstance(transition, dict):
+            add(f"{prefix}.transition.n", transition.get("n"))
+            from_params = transition.get("from_params", {})
+            if isinstance(from_params, dict):
+                add(f"{prefix}.transition.from_params.n", from_params.get("n"))
+    return values
+
+
+def _validate_topology_config(generation, scenario, partitioning_config, *, real_counts_path=None):
+    """Fail fast when composed generator configs disagree on the HH threshold."""
+    if "n" not in generation:
+        raise ValueError("generation config must define n")
+    n = int(generation["n"])
+    errors = []
+
+    if real_counts_path is None:
+        for path, value in _collect_scenario_n_values(scenario):
+            if value != n:
+                errors.append(f"{path}={value}, expected generation.n={n}")
+
+    top_n = partitioning_config.get("top_n")
+    if top_n is not None and int(top_n) != n:
+        errors.append(f"partitioning.top_n={int(top_n)}, expected generation.n={n}")
+
+    if errors:
+        formatted = "\n  - ".join(errors)
+        raise ValueError(f"inconsistent topology configuration:\n  - {formatted}")
+
+
+parser = argparse.ArgumentParser(description="Generate streaming data from separated generator configs.")
+parser.add_argument(
+    "--run-config",
+    default=str(DEFAULT_RUN_CONFIG),
+    help="Run preset that composes generation, scenario, and partitioning configs.",
+)
+parser.add_argument(
+    "--generation",
+    default=None,
+    help="Override generation/output config path for a composed run.",
+)
+parser.add_argument(
+    "--partitioning",
+    default=None,
+    help="Override partitioning config path for a composed run.",
+)
+parser.add_argument(
+    "--scenario",
+    default=None,
+    help="Override scenario config path for generated global counts.",
+)
+parser.add_argument(
+    "--real-counts",
+    default=None,
+    help="Path to real per-window global counts (.jsonl or .csv).",
+)
+parser.add_argument(
+    "--global-counts-out",
+    default=None,
+    help="Write phase-1 global per-window counts to this JSONL path.",
+)
+parser.add_argument(
+    "--global-counts-only",
+    action="store_true",
+    help="Stop after writing phase-1 global counts. Requires --global-counts-out.",
+)
+parser.add_argument(
+    "--save-windows-separately",
+    action="store_true",
+    help="When expanding streams, write one compressed JSON file per window.",
+)
+parser.add_argument(
+    "--no-plots",
+    action="store_true",
+    help="Skip distribution and partition-skew plots for this run.",
+)
+parser.add_argument(
+    "--run-name",
+    default=None,
+    help="Optional output run name. Defaults to a timestamp plus config/scenario/policy name.",
+)
+args = parser.parse_args()
+if args.global_counts_only and not args.global_counts_out:
+    parser.error("--global-counts-only requires --global-counts-out")
+
+resolved = _load_run_configuration(args)
+generation = resolved["generation_config"]
+partitioning_config = resolved["partitioning_config"]
+scenario = resolved["scenario"]
+_validate_topology_config(generation, scenario, partitioning_config, real_counts_path=args.real_counts)
+
+seed = generation["seed"]
+window_size = generation["window_size"]
+num_keys = generation["num_keys"]
+n = generation["n"]
+m = generation["m"]
+
+output_root = Path(generation["output_dir"])
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+generation_stem = _slug(resolved["generation_path"].stem if resolved["generation_path"] else "generation")
+scenario_source = resolved["scenario_path"] if args.real_counts is None else Path(args.real_counts)
+scenario_stem = _slug(scenario_source.stem if scenario_source else "real_counts")
+policy_stem = _slug(partitioning_config.get("policy", "partitioning"))
+run_name = _slug(args.run_name) if args.run_name else f"{timestamp}_{generation_stem}_{scenario_stem}_{policy_stem}"
+run_dir = _unique_run_dir(output_root, run_name)
+streams_dir = run_dir / "streams"
+plots_dir = run_dir / "plots"
+config_dir = run_dir / "config"
+streams_dir.mkdir(parents=True, exist_ok=False)
+plots_dir.mkdir(parents=True, exist_ok=True)
+config_dir.mkdir(parents=True, exist_ok=True)
+
+stream_file = str(streams_dir / generation["stream_file"])
+summary_file = str(streams_dir / generation["summary_file"])
+stream_json_file = str(streams_dir / generation["stream_json_file"])
+
+plot_distr = generation["plot_distr"] and not args.no_plots
+plot_data_config = (str(plots_dir), generation["plot_format"])
+hot_key_drift_pct = generation.get("hot_key_drift_pct", 0)
+top_n_churn_pct = generation.get("top_n_churn_pct", 0)
+top_n_churn_n = generation.get("top_n_churn_n")
+max_rel_freq_delta_pct = generation.get("max_rel_freq_delta_pct", 20)
+new_key_pct = generation.get("new_key_pct", 10)
+newborn_hot_birth_prob = generation.get("newborn_hot_birth_prob", 0.05)
+max_hot_newborn_frac = generation.get("max_hot_newborn_frac", 0.10)
+expand_streams = generation.get("expand_streams")
+save_windows_separately = generation.get("save_windows_separately", False) or args.save_windows_separately
+
+if resolved["run_config_path"]:
+    shutil.copy2(resolved["run_config_path"], config_dir / "run.json")
+_copy_or_write_config(config_dir, "generation.json", generation, resolved["generation_path"])
+_copy_or_write_config(config_dir, "partitioning.json", partitioning_config, resolved["partitioning_path"])
+if args.real_counts is None:
+    _copy_or_write_config(config_dir, "scenario.json", scenario, resolved["scenario_path"])
+
+with open(run_dir / "manifest.json", "w", encoding="utf-8") as f:
+    json.dump(
+        {
+            "run_name": run_dir.name,
+            "config_mode": resolved["mode"],
+            "run_config": None if resolved["run_config_path"] is None else str(resolved["run_config_path"]),
+            "generation": None if resolved["generation_path"] is None else str(resolved["generation_path"]),
+            "partitioning": None if resolved["partitioning_path"] is None else str(resolved["partitioning_path"]),
+            "scenario": None if resolved["scenario_path"] is None else str(resolved["scenario_path"]),
+            "real_counts": None if args.real_counts is None else str(Path(args.real_counts).resolve()),
+            "global_counts_out": None if args.global_counts_out is None else str(Path(args.global_counts_out).resolve()),
+            "global_counts_only": bool(args.global_counts_only),
+            "streams_dir": str(streams_dir),
+            "plots_dir": str(plots_dir),
+            "stream_file": stream_file,
+            "summary_file": summary_file,
+            "stream_json_file": stream_json_file,
+        },
+        f,
+        indent=2,
+    )
+
+print(f"Generator run directory: {run_dir}")
+
+prepare_and_store_data(
+    seed,
+    window_size,
+    num_keys,
+    n,
+    m,
+    scenario,
+    args.real_counts,
+    args.global_counts_out,
+    args.global_counts_only,
+    stream_file,
+    summary_file,
+    stream_json_file,
+    plot_distr,
+    plot_data_config,
+    partitioning_config,
+    hot_key_drift_pct,
+    top_n_churn_pct,
+    top_n_churn_n,
+    max_rel_freq_delta_pct,
+    new_key_pct,
+    newborn_hot_birth_prob,
+    max_hot_newborn_frac,
+    expand_streams,
+    save_windows_separately,
+)

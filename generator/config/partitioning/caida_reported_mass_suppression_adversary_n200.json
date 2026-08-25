@@ -1,0 +1,14 @@
+{
+  "policy": "reported_mass_suppression_adversary",
+  "top_n": 200,
+  "validate_count_preservation": true,
+  "rms_hh_hidden_scale": 1.0,
+  "rms_hh_overflow_reporters": 1,
+  "rms_hh_visible_cap_scale": 64.0,
+  "rms_nonhh_min_ratio": 0.55,
+  "rms_nonhh_max_ratio": 0.999,
+  "rms_nonhh_count_ratio": 0.0,
+  "rms_nonhh_max_reporters": 0,
+  "rms_background_spread": true,
+  "rms_print_diagnostics": true
+}

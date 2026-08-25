@@ -1,0 +1,5 @@
+{
+  "generation": "../generation/dynamic_mixed_heavy_tail_n100.json",
+  "scenario": "../scenarios/dynamic_mixed_heavy_tail_n100.json",
+  "partitioning": "../partitioning/round_robin.json"
+}

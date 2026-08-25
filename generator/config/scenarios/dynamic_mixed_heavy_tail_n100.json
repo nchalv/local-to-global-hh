@@ -1,0 +1,71 @@
+[
+  {
+    "type": "zipfian",
+    "duration": 35,
+    "params": {
+      "s": 1.10,
+      "min_count_per_key": 1
+    },
+    "n": 100
+  },
+  {
+    "type": "normal",
+    "duration": 35,
+    "params": {
+      "n": 100,
+      "center_frac": 0.25,
+      "std_frac": 0.0026,
+      "ensure_hh": true,
+      "min_count_per_key": 1
+    },
+    "n": 100,
+    "transition": {
+      "from": "zipfian",
+      "transition_windows": 20,
+      "from_params": {
+        "s": 1.10,
+        "min_count_per_key": 1
+      },
+      "n": 100
+    }
+  },
+  {
+    "type": "zipfian",
+    "duration": 35,
+    "params": {
+      "s": 0.95,
+      "min_count_per_key": 1
+    },
+    "n": 100,
+    "transition": {
+      "from": "normal",
+      "transition_windows": 20,
+      "from_params": {
+        "n": 100,
+        "center_frac": 0.25,
+        "std_frac": 0.0026,
+        "ensure_hh": true,
+        "min_count_per_key": 1
+      },
+      "n": 100
+    }
+  },
+  {
+    "type": "zipfian",
+    "duration": 35,
+    "params": {
+      "s": 1.25,
+      "min_count_per_key": 1
+    },
+    "n": 100,
+    "transition": {
+      "from": "zipfian",
+      "transition_windows": 20,
+      "from_params": {
+        "s": 0.95,
+        "min_count_per_key": 1
+      },
+      "n": 100
+    }
+  }
+]

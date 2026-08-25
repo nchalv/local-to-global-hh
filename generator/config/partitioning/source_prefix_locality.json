@@ -1,0 +1,5 @@
+{
+  "policy": "source_prefix_locality",
+  "source_prefix_ipv4_bits": 16,
+  "source_prefix_ipv6_bits": 48
+}

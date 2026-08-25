@@ -1,0 +1,5 @@
+{
+  "generation": "../generation/dynamic_mixed_heavy_tail_caida_churn_n400_m100_counts.json",
+  "scenario": "../scenarios/default.json",
+  "partitioning": "../partitioning/round_robin.json"
+}
