@@ -442,7 +442,8 @@ int main(int argc, char** argv) {
           ? 2 * A.n_param
           : A.n_param;
       hybrid_control = Coordinator::reduce_hybrid_streaming_for_control(
-          snaps, A.n_param, top_limit, hybrid_seed_ids);
+          snaps, A.n_param, top_limit, hybrid_seed_ids,
+          hybrid_head_generation);
       R = std::move(hybrid_control.published);
     } else if (A.method == "ss" && A.policy == Policy::Difficulty) {
       ss_control = Coordinator::reduce_ss_streaming_for_control(

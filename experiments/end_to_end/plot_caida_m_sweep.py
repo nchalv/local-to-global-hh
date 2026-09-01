@@ -72,7 +72,7 @@ METHODS = {
         "label": "Adaptive SS",
         "allocation": "Adaptive SS",
         "color": "#d97706",
-        "marker": "D",
+        "marker": "o",
     },
     "hybrid": {
         "label": "Hybrid",
@@ -90,9 +90,23 @@ METRICS = (
 )
 
 
-def compact_decimal(value: float, _position: int) -> str:
-    """Render axis ticks with at most two fractional digits."""
-    return f"{value:.2f}".rstrip("0").rstrip(".")
+def consistent_decimal_formatter(axis) -> FuncFormatter:
+    """Use one fractional precision per axis, leaving integers unadorned."""
+
+    def format_tick(value: float, _position: int) -> str:
+        if abs(value - round(value)) < 1e-9:
+            return str(int(round(value)))
+        ticks = axis.get_majorticklocs()
+        precision = 1
+        if any(
+            abs(tick - round(tick)) >= 1e-9
+            and abs(tick * 10.0 - round(tick * 10.0)) >= 1e-8
+            for tick in ticks
+        ):
+            precision = 2
+        return f"{value:.{precision}f}"
+
+    return FuncFormatter(format_tick)
 
 
 def parse_args() -> argparse.Namespace:
@@ -122,20 +136,25 @@ def parse_args() -> argparse.Namespace:
         help="Render a compact square-panel layout at ACM single-column width",
     )
     parser.add_argument(
+        "--no-legend",
+        action="store_true",
+        help="Omit the legend when a shared LaTeX legend is used",
+    )
+    parser.add_argument(
         "--panel-aspect",
         type=float,
-        default=0.52,
+        default=0.46,
         help="Subplot height/width ratio in single-column mode",
     )
     parser.add_argument(
         "--omit-hl-008",
         action="store_true",
-        help="Omit the HeavyLocker 0.08n point from rendered frontiers",
+        help="Omit the HeavyLocker 0.08n point from rendered configuration curves",
     )
     parser.add_argument(
         "--omit-static-ss",
         action="store_true",
-        help="Omit fixed-capacity Space-Saving points from rendered frontiers",
+        help="Omit fixed-capacity Space-Saving points from rendered configuration curves",
     )
     return parser.parse_args()
 
@@ -213,6 +232,7 @@ def plot_placement(
     resource: str,
     resource_label: str,
     resource_name: str,
+    resource_divisor: float = 1.0,
     row_key: str = "m",
     row_values: tuple[int, ...] = M_VALUES,
     row_symbol: str = "m",
@@ -220,6 +240,7 @@ def plot_placement(
     panel_aspect: float = 1.0,
     hl_methods: tuple[str, ...] = HL_METHODS,
     include_static: bool = True,
+    show_legend: bool = True,
 ) -> None:
     base_font = 5.4 if single_column else 7.0
     plt.rcParams.update(
@@ -247,10 +268,10 @@ def plot_placement(
     )
     placement_rows = [row for row in results if row["placement"] == placement]
 
-    def pareto_front(
+    def nondominated_curve(
         points: list[tuple[float, float, str]], maximize_quality: bool
     ) -> list[tuple[float, float, str]]:
-        front: list[tuple[float, float, str]] = []
+        curve: list[tuple[float, float, str]] = []
         for candidate in points:
             x_value, y_value, _ = candidate
             dominated = False
@@ -276,8 +297,8 @@ def plot_placement(
                     dominated = True
                     break
             if not dominated:
-                front.append(candidate)
-        return sorted(front, key=lambda point: point[0])
+                curve.append(candidate)
+        return sorted(curve, key=lambda point: point[0])
 
     for row_index, row_value in enumerate(row_values):
         scale_rows = [
@@ -290,27 +311,27 @@ def plot_placement(
             ax = axes[row_index, column_index]
             hl_points = [
                 (
-                    float(by_method[method][resource]),
+                    float(by_method[method][resource]) / resource_divisor,
                     float(by_method[method][metric]),
                     method,
                 )
                 for method in hl_methods
             ]
             hybrid_point = (
-                float(by_method["hybrid"][resource]),
+                float(by_method["hybrid"][resource]) / resource_divisor,
                 float(by_method["hybrid"][metric]),
                 "hybrid",
             )
             static_points = [
                 (
-                    float(by_method[method][resource]),
+                    float(by_method[method][resource]) / resource_divisor,
                     float(by_method[method][metric]),
                     method,
                 )
                 for method in STATIC_METHODS if include_static
             ]
             adaptive_point = (
-                float(by_method["ss[policy=difficulty]"][resource]),
+                float(by_method["ss[policy=difficulty]"][resource]) / resource_divisor,
                 float(by_method["ss[policy=difficulty]"][metric]),
                 "ss[policy=difficulty]",
             )
@@ -334,29 +355,29 @@ def plot_placement(
                 [point[0] for point in static_points],
                 [point[1] for point in static_points],
                 color="#777777",
-                linestyle="--",
+                linestyle=(0, (2.0, 1.4)),
                 linewidth=0.9,
-                zorder=1,
+                zorder=3,
             )
-            # Hybrid is an isolated comparison point.  Frontier segments connect
+            # Hybrid is an isolated comparison point. Configuration-curve segments connect
             # only the ordered HeavyLocker capacity configurations.
-            front = pareto_front(
+            curve = nondominated_curve(
                 hl_points, maximize_quality=metric in {"f1", "recall"}
             )
-            if len(front) > 1:
+            if len(curve) > 1:
                 ax.plot(
-                    [point[0] for point in front],
-                    [point[1] for point in front],
+                    [point[0] for point in curve],
+                    [point[1] for point in curve],
                     color="#222222",
                     linewidth=0.9 if single_column else 1.15,
                     zorder=2,
                 )
 
-            front_methods = {point[2] for point in front}
+            curve_methods = {point[2] for point in curve}
             for x_value, y_value, method in all_points:
                 style = METHODS[method]
-                is_front = method in front_methods
-                emphasize = is_front or method not in hl_methods
+                is_on_curve = method in curve_methods
+                emphasize = is_on_curve or method not in hl_methods
                 ax.plot(
                     x_value,
                     y_value,
@@ -371,6 +392,7 @@ def plot_placement(
                     markeredgewidth=0.9 if emphasize else 0.7,
                     alpha=1.0 if emphasize else 0.55,
                     linestyle="none",
+                    clip_on=True,
                     zorder=4 if emphasize else 3,
                 )
 
@@ -390,13 +412,21 @@ def plot_placement(
                 color="#dddddd",
                 linewidth=0.35 if single_column else 0.5,
             )
-            ax.margins(x=0.08, y=0.14)
+            # Keep marker edges and star tips clear of the axes frame.
+            ax.margins(x=0.18, y=0.28)
             if metric in {"f1", "recall"}:
-                quality_bottom = ax.get_ylim()[0]
-                # Leave room around perfect-quality markers, but keep 1.00 as
-                # the highest labeled value on the bounded quality scale.
-                ax.set_ylim(bottom=quality_bottom, top=1.015)
-            ax.yaxis.set_major_formatter(FuncFormatter(compact_decimal))
+                # Quality is bounded by 1. Scale each panel around its displayed
+                # range, reserving only enough room to keep marker edges clear
+                # of the top and bottom spines. The minimum span avoids a
+                # degenerate axis when every displayed value is perfect.
+                quality_min = min(point[1] for point in all_points)
+                quality_span = max(1.0 - quality_min, 0.005)
+                marker_clearance = 0.10 * quality_span
+                quality_bottom = max(
+                    0.0, 1.0 - quality_span - marker_clearance
+                )
+                quality_top = 1.0 + marker_clearance
+                ax.set_ylim(bottom=quality_bottom, top=quality_top)
             if single_column:
                 ax.set_box_aspect(panel_aspect)
                 ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
@@ -404,18 +434,30 @@ def plot_placement(
                     ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
                 ax.tick_params(axis="both", length=2, pad=1)
             if metric in {"f1", "recall"}:
-                quality_span = 1.0 - quality_bottom
+                tick_span = 1.0 - quality_bottom
                 quality_step = next(
                     step
                     for step in (0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5)
-                    if quality_span / step <= 4.0
+                    if tick_span / step <= 4.0
                 )
                 quality_ticks = [1.0]
                 value = 1.0 - quality_step
                 while value >= quality_bottom - 1e-9:
                     quality_ticks.append(value)
                     value -= quality_step
+                if len(quality_ticks) == 1:
+                    lower_tick = 1.0 - quality_step
+                    quality_ticks.append(lower_tick)
+                    tick_clearance = 0.10 * quality_step
+                    quality_bottom = max(
+                        0.0, min(quality_bottom, lower_tick - tick_clearance)
+                    )
+                    quality_top = max(
+                        quality_top, 1.0 + tick_clearance
+                    )
+                    ax.set_ylim(bottom=quality_bottom, top=quality_top)
                 ax.set_yticks(sorted(quality_ticks))
+            ax.yaxis.set_major_formatter(consistent_decimal_formatter(ax.yaxis))
 
     handles = [
         Line2D(
@@ -438,29 +480,33 @@ def plot_placement(
         if method != "hl" or "hl" in hl_methods
         if include_static or method not in STATIC_METHODS
     ]
-    fig.legend(
-        handles=handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, 0.985 if single_column else 0.965),
-        ncol=len(handles) if single_column else 4,
-        frameon=False,
-        columnspacing=0.24 if single_column else 0.8,
-        handletextpad=0.12 if single_column else 0.3,
-        borderaxespad=0,
-    )
+    if show_legend:
+        fig.legend(
+            handles=handles,
+            loc="upper center",
+            bbox_to_anchor=(
+                (0.06, 1.10, 0.94, 0.0) if single_column else (0.5, 0.965)
+            ),
+            ncol=4 if single_column else 4,
+            mode="expand" if single_column else None,
+            frameon=False,
+            columnspacing=0.24 if single_column else 0.8,
+            handletextpad=0.12 if single_column else 0.3,
+            borderaxespad=0,
+        )
     if single_column:
-        fig.supxlabel(resource_label, y=-0.005, fontsize=5.6)
+        fig.supxlabel(resource_label, y=-0.025, fontsize=5.6)
         fig.subplots_adjust(
-            left=0.12,
-            right=0.995,
-            top=0.885,
+            left=0.06,
+            right=1.0,
+            top=0.88,
             bottom=0.095,
-            hspace=0.10,
-            wspace=0.36,
+            hspace=0.12,
+            wspace=0.28,
         )
     else:
         fig.suptitle(
-            f"{title}: {resource_name} quality frontiers",
+            f"{title}: {resource_name} configuration curves",
             y=0.995,
             fontsize=9,
         )
@@ -468,7 +514,7 @@ def plot_placement(
             0.5,
             0.008,
             f"Black segments mark the non-dominated HL {resource_name.lower()} "
-            "quality frontier; grey dashes connect static SS capacities. "
+            "quality configuration curve; grey dashes connect static SS capacities. "
             "Adaptive SS and Hybrid are unconnected points.",
             ha="center",
             va="bottom",
@@ -499,14 +545,15 @@ def main() -> int:
             placement,
             title,
             results,
-            "report_volume_kib",
-            r"Upstream communication (KiB/window) $\downarrow$",
-            "Upstream-communication",
+            "mem_worker_total_kib",
+            r"Mean per-partition memory (KiB) $\downarrow$",
+            "Per-partition-memory",
             row_values=PLOT_M_VALUES,
             single_column=args.single_column,
             panel_aspect=args.panel_aspect,
             hl_methods=hl_methods,
             include_static=not args.omit_static_ss,
+            show_legend=not args.no_legend,
         )
         plot_placement(
             args.out / f"caida_m_sweep_{placement}_worker_memory.pdf",
@@ -514,13 +561,15 @@ def main() -> int:
             title,
             results,
             "mem_worker_total_kib",
-            r"Mean worker memory (KiB) $\downarrow$",
-            "Worker-memory",
+            r"Mean per-partition memory (MiB) $\downarrow$",
+            "Per-partition memory",
+            resource_divisor=1.0,
             row_values=PLOT_M_VALUES,
             single_column=args.single_column,
             panel_aspect=args.panel_aspect,
             hl_methods=hl_methods,
             include_static=not args.omit_static_ss,
+            show_legend=not args.no_legend,
         )
     print(f"Wrote m-sweep summary and figures to {args.out}")
     return 0

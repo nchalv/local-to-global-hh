@@ -108,16 +108,16 @@ public:
       ReduceTelemetry* telemetry = nullptr,
       bool prune_certified_non_hh = true);
 
-  // Predicate-based coordinated Hybrid reducer. Candidate records in each
-  // snapshot's exact-head prefix contribute to the full result but are
-  // excluded from residual-tail telemetry according to the sorted installed
-  // current_head_ids dictionary. top_limit is normally n (or 2n for the
+  // Coordinated Hybrid reducer. Compact exact-head slot/count records are
+  // resolved against the installed dictionary; residual candidates retain
+  // identifiers and error metadata. top_limit is normally n (or 2n for the
   // diagnostic Top2N head policy).
   static HybridControlReduction reduce_hybrid_streaming_for_control(
       const std::vector<SnapshotEx>& snaps_ex,
       std::size_t n_param,
       std::size_t top_limit,
       const std::vector<Id128>& current_head_ids,
+      std::uint64_t current_head_generation,
       std::size_t parallelism = 1);
 
   // Coordinated plain-SS reduction. This is the headless specialization of
@@ -132,7 +132,8 @@ public:
       const std::vector<SnapshotEx>& snaps_ex,
       std::size_t n_param,
       std::size_t top_limit,
-      const std::vector<Id128>& current_head_ids);
+      const std::vector<Id128>& current_head_ids,
+      std::uint64_t current_head_generation);
 
   // HeavyLocker paper-style serial bucket merge: aggregate one corresponding
   // bucket across workers, retain top-d, and release its temporary state.

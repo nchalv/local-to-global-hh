@@ -195,15 +195,21 @@ def draw(path: Path, rows: list[dict[str, object]], placement: str, title: str) 
             "ytick.labelsize": 10.0,
         }
     )
-    fig, axes = plt.subplots(2, 4, figsize=(7.0, 3.65))
+    fig, axes = plt.subplots(2, 4, figsize=(7.0, 3.65), sharey="row")
     styles = {
-        "Adaptive SS": ("#d97706", "D"),
+        "Adaptive SS": ("#d97706", "o"),
         "Hybrid": ("#b91c1c", "*"),
     }
+    line_styles = {
+        "Adaptive SS": ("#777777", ":"),
+        "Hybrid": ("#111111", "-"),
+    }
     metrics = (
-        ("f1", r"HH F1 $\uparrow$"),
-        ("normalized_error", r"Normalized error $\downarrow$"),
+        ("f1", r"HH F1$\uparrow$"),
+        ("normalized_error", "Thresh.-norm. err.$\\downarrow$"),
     )
+    plot_epsilon_max = {"Adaptive SS": 0.25, "Hybrid": float("inf")}
+    clipped_extensions = []
     for column, n in enumerate(N_VALUES):
         selected = [
             row for row in rows
@@ -212,21 +218,39 @@ def draw(path: Path, rows: list[dict[str, object]], placement: str, title: str) 
         for row_index, (metric, ylabel) in enumerate(metrics):
             ax = axes[row_index, column]
             for family, (color, marker) in styles.items():
-                points = sorted(
+                line_color, line_style = line_styles[family]
+                all_points = sorted(
                     (row for row in selected if row["method"] == family),
                     key=lambda row: float(row["epsilon_m"]),
                 )
+                points = [
+                    row for row in all_points
+                    if float(row["epsilon_m"]) <= plot_epsilon_max[family]
+                ]
                 ax.plot(
-                    [float(row["worker_mib"]) for row in points],
+                    [1024.0 * float(row["worker_mib"]) for row in points],
                     [float(row[metric]) for row in points],
-                    color=color,
-                    marker=marker,
-                    markersize=6.8 if family == "Hybrid" else 5.8,
-                    markerfacecolor="white",
-                    markeredgecolor="#111111",
-                    markeredgewidth=0.95,
-                    linewidth=1.7,
+                    color=line_color,
+                    linestyle=line_style,
+                    linewidth=0.9 if family == "Hybrid" else 1.7,
                 )
+                omitted = [row for row in all_points if row not in points]
+                if points and omitted:
+                    clipped_extensions.append(
+                        (
+                            ax,
+                            line_color,
+                            line_style,
+                            (
+                                1024.0 * float(points[-1]["worker_mib"]),
+                                float(points[-1][metric]),
+                            ),
+                            (
+                                1024.0 * float(omitted[0]["worker_mib"]),
+                                float(omitted[0][metric]),
+                            ),
+                        )
+                    )
                 selected_epsilon = SELECTED_EPSILON[family]
                 selected_point = next(
                     (
@@ -246,8 +270,32 @@ def draw(path: Path, rows: list[dict[str, object]], placement: str, title: str) 
                         f"selected epsilon_M={selected_epsilon:g} is absent "
                         f"for {family} under {placement}, n={n}"
                     )
+                alternative_points = [
+                    point for point in points if point is not selected_point
+                ]
+                if family == "Hybrid":
+                    ax.scatter(
+                        [1024.0 * float(point["worker_mib"]) for point in alternative_points],
+                        [float(point[metric]) for point in alternative_points],
+                        marker="o",
+                        s=10,
+                        color="#111111",
+                        linewidths=0,
+                        zorder=4,
+                    )
+                else:
+                    ax.scatter(
+                        [1024.0 * float(point["worker_mib"]) for point in alternative_points],
+                        [float(point[metric]) for point in alternative_points],
+                        marker="o",
+                        s=17,
+                        facecolors="white",
+                        edgecolors="#111111",
+                        linewidths=0.8,
+                        zorder=4,
+                    )
                 ax.scatter(
-                    [float(selected_point["worker_mib"])],
+                    [1024.0 * float(selected_point["worker_mib"])],
                     [float(selected_point[metric])],
                     marker=marker,
                     s=70 if family == "Hybrid" else 42,
@@ -262,20 +310,39 @@ def draw(path: Path, rows: list[dict[str, object]], placement: str, title: str) 
             ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
             if column == 0:
                 ax.set_ylabel(ylabel)
+            else:
+                ax.tick_params(axis="y", left=False, labelleft=False)
             if row_index == 0:
                 ax.set_title(rf"$n={n}$")
+    # Show the direction of the truncated Adaptive SS curve without allowing the
+    # omitted point to expand the shared axes.
+    fig.canvas.draw()
+    for ax, line_color, line_style, start, end in clipped_extensions:
+        xlim, ylim = ax.get_xlim(), ax.get_ylim()
+        ax.plot(
+            [start[0], end[0]],
+            [start[1], end[1]],
+            color=line_color,
+            linestyle=line_style,
+            linewidth=1.7,
+            clip_on=True,
+            zorder=1.5,
+        )
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
     fig.legend(
         handles=[
             Line2D(
                 [],
                 [],
-                color=color,
+                color=line_styles[family][0],
+                linestyle=line_styles[family][1],
                 marker=marker,
                 markersize=8.0 if family == "Hybrid" else 6.2,
                 markerfacecolor=color,
                 markeredgecolor="#111111",
                 markeredgewidth=0.85,
-                linewidth=1.7,
+                linewidth=0.9 if family == "Hybrid" else 1.7,
                 label=rf"{family}: selected $\epsilon_M={SELECTED_EPSILON[family]:g}$",
             )
             for family, (color, marker) in styles.items()
@@ -283,14 +350,14 @@ def draw(path: Path, rows: list[dict[str, object]], placement: str, title: str) 
         loc="upper center",
         ncol=2,
         frameon=False,
-        bbox_to_anchor=(0.5, 0.995),
+        bbox_to_anchor=(0.5, 0.955),
         fontsize=9.8,
         columnspacing=1.1,
         handletextpad=0.5,
     )
-    fig.supxlabel("Mean worker memory per partition (MiB)", y=0.02, fontsize=11.0)
+    fig.supxlabel("Mean per-partition memory (KiB)", y=0.02, fontsize=11.0)
     fig.subplots_adjust(
-        left=0.10, right=0.98, bottom=0.15, top=0.74, wspace=0.50, hspace=0.38
+        left=0.13, right=0.99, bottom=0.15, top=0.78, wspace=0.24, hspace=0.38
     )
     fig.savefig(path)
     plt.close(fig)

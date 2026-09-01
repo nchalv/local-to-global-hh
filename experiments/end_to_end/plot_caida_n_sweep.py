@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot quality/resource frontiers for the fixed-m CAIDA n sweep."""
+"""Plot quality/resource configuration curves for the fixed-m CAIDA n sweep."""
 
 from __future__ import annotations
 
@@ -54,20 +54,25 @@ def parse_args() -> argparse.Namespace:
         help="Render a compact square-panel layout at ACM single-column width",
     )
     parser.add_argument(
+        "--no-legend",
+        action="store_true",
+        help="Omit the legend when a shared LaTeX legend is used",
+    )
+    parser.add_argument(
         "--panel-aspect",
         type=float,
-        default=0.52,
+        default=0.46,
         help="Subplot height/width ratio in single-column mode",
     )
     parser.add_argument(
         "--omit-hl-008",
         action="store_true",
-        help="Omit the HeavyLocker 0.08n point from rendered frontiers",
+        help="Omit the HeavyLocker 0.08n point from rendered configuration curves",
     )
     parser.add_argument(
         "--omit-static-ss",
         action="store_true",
-        help="Omit fixed-capacity Space-Saving points from rendered frontiers",
+        help="Omit fixed-capacity Space-Saving points from rendered configuration curves",
     )
     return parser.parse_args()
 
@@ -161,21 +166,21 @@ def main() -> int:
             "panel_aspect": args.panel_aspect,
             "hl_methods": hl_methods,
             "include_static": not args.omit_static_ss,
+            "show_legend": not args.no_legend,
         }
         plot_placement(
             args.out / f"caida_n_sweep_{placement}.pdf",
-            resource="report_volume_kib",
-            resource_label=(
-                r"Upstream communication (KiB/window) $\downarrow$"
-            ),
-            resource_name="Upstream-communication",
+            resource="mem_worker_total_kib",
+            resource_label=r"Mean per-partition memory (KiB) $\downarrow$",
+            resource_name="Per-partition-memory",
             **common,
         )
         plot_placement(
             args.out / f"caida_n_sweep_{placement}_worker_memory.pdf",
             resource="mem_worker_total_kib",
-            resource_label=r"Mean worker memory (KiB) $\downarrow$",
-            resource_name="Worker-memory",
+            resource_label=r"Mean per-partition memory (MiB) $\downarrow$",
+            resource_name="Per-partition memory",
+            resource_divisor=1.0,
             **common,
         )
 

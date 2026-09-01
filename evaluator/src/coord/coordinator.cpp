@@ -717,6 +717,7 @@ HybridControlReduction Coordinator::reduce_hybrid_streaming_for_control(
     std::size_t n_param,
     std::size_t top_limit,
     const std::vector<Id128>& current_head_ids,
+    std::uint64_t current_head_generation,
     std::size_t parallelism)
 {
   HybridControlReduction out{};
@@ -772,15 +773,17 @@ HybridControlReduction Coordinator::reduce_hybrid_streaming_for_control(
 
   for (std::size_t pi = 0; pi < snaps_ex.size(); ++pi) {
     const auto& snapshot = snaps_ex[pi];
+    if (snapshot.head_generation != current_head_generation) {
+      throw std::runtime_error(
+          "hybrid report generation does not match installed dictionary");
+    }
     part_mass[pi] = static_cast<double>(snapshot.N_local);
-    const std::size_t exact_prefix =
-        std::min(snapshot.head_size, snapshot.candidates.size());
 
-    const std::size_t residual_size = snapshot.candidates.size() - exact_prefix;
+    const std::size_t residual_size = snapshot.candidates.size();
     if (snapshot.q_local > 0 && residual_size >= snapshot.q_local) {
       std::uint32_t minimum = UINT32_MAX;
-      for (std::size_t ci = exact_prefix; ci < snapshot.candidates.size(); ++ci) {
-        minimum = std::min(minimum, snapshot.candidates[ci].est);
+      for (const auto& candidate : snapshot.candidates) {
+        minimum = std::min(minimum, candidate.est);
       }
       if (minimum != UINT32_MAX) residual_min_counter[pi] = minimum;
     }
@@ -794,41 +797,34 @@ HybridControlReduction Coordinator::reduce_hybrid_streaming_for_control(
     const bool has_bounds = snapshot.has_error_bounds();
     const bool has_sketch_bound = snapshot.has_sketch_error_bound();
     auto& tail = tails[pi];
-    tail.reserve(snapshot.candidates.size() - exact_prefix);
+    tail.reserve(snapshot.candidates.size());
     std::vector<std::size_t> reported_head_slots;
-    reported_head_slots.reserve(exact_prefix);
-    std::size_t slot = 0;
+    reported_head_slots.reserve(snapshot.head_records.size());
+    for (const auto& head_record : snapshot.head_records) {
+      const std::size_t slot = head_record.slot;
+      if (slot >= current_head_ids.size()) {
+        throw std::runtime_error(
+            "hybrid exact-head report contains an invalid dictionary slot");
+      }
+      head_agg[slot].est += head_record.count;
+      if (head_agg[slot].resolution_worker == kNoResolutionWorker) {
+        head_agg[slot].resolution_worker = static_cast<std::uint32_t>(pi);
+      }
+      reported_head_slots.push_back(slot);
+    }
     for (std::size_t ci = 0; ci < snapshot.candidates.size(); ++ci) {
       const auto& candidate = snapshot.candidates[ci];
       Record record{candidate.id, candidate.est};
-      if (ci < exact_prefix
-          || (!has_bounds && has_sketch_bound && ci < snapshot.sketch_eps_from)) {
+      if (!has_bounds && has_sketch_bound && ci < snapshot.sketch_eps_from) {
         record.bound = Record::Bound::exact;
       } else if (has_bounds || (has_sketch_bound && ci >= snapshot.sketch_eps_from)) {
         record.eps = snapshot.cand_eps(ci);
         record.bound = Record::Bound::epsilon;
       }
-      if (ci < exact_prefix) {
-        while (slot < current_head_ids.size()
-               && id_less(current_head_ids[slot], candidate.id)) {
-          ++slot;
-        }
-        if (slot >= current_head_ids.size()
-            || !(current_head_ids[slot] == candidate.id)) {
-          throw std::runtime_error(
-              "hybrid exact-head report is absent from installed dictionary");
-        }
-        head_agg[slot].est += record.est;
-        if (head_agg[slot].resolution_worker == kNoResolutionWorker) {
-          head_agg[slot].resolution_worker = static_cast<std::uint32_t>(pi);
-        }
-        reported_head_slots.push_back(slot);
-      } else {
-        // Hybrid routes installed head keys exclusively to the exact prefix,
-        // so no dictionary membership test is required for residual records.
-        tail.push_back(record);
-        ++prefix_histogram[record.id.b[0]];
-      }
+      // Installed head keys are routed exclusively through head_records, so no
+      // dictionary membership test is required for residual records.
+      tail.push_back(record);
+      ++prefix_histogram[record.id.b[0]];
     }
     std::sort(reported_head_slots.begin(), reported_head_slots.end());
     reported_head_slots.erase(
@@ -1226,8 +1222,12 @@ HybridControlReduction Coordinator::reduce_hybrid_streaming_for_control(
       + sizeof(current_head_ids)
       + current_head_ids.capacity() * sizeof(Id128);
   out.telemetry.ingress_bytes =
-      snaps_ex.size() * kHeaderBytes
-      + shard_count * snaps_ex.size() * kLogicalCertificateRecordBytes;
+      snaps_ex.size() * kHeaderBytes;
+  for (const auto& snapshot : snaps_ex) {
+    out.telemetry.ingress_bytes +=
+        snapshot.head_records.size() * sizeof(HeadRecord)
+        + snapshot.candidates.size() * kLogicalCertificateRecordBytes;
+  }
   out.telemetry.agg_bytes = dense_head_bytes + sizeof(Agg);
   out.telemetry.presence_bytes = merge_bytes;
   out.telemetry.items_bytes = retained_bytes;
@@ -1247,20 +1247,23 @@ HybridControlReduction Coordinator::reduce_ss_streaming_for_control(
 {
   static const std::vector<Id128> no_head_ids;
   return reduce_hybrid_streaming_for_control(
-      snaps_ex, n_param, /*top_limit=*/0, no_head_ids, parallelism);
+      snaps_ex, n_param, /*top_limit=*/0, no_head_ids,
+      /*current_head_generation=*/0, parallelism);
 }
 
 HybridControlReduction Coordinator::reduce_hybrid_parallel_streaming_for_control(
     const std::vector<SnapshotEx>& snaps_ex,
     std::size_t n_param,
     std::size_t top_limit,
-    const std::vector<Id128>& current_head_ids)
+    const std::vector<Id128>& current_head_ids,
+    std::uint64_t current_head_generation)
 {
   const std::size_t parallelism = std::max<std::size_t>(
       1, std::min<std::size_t>(
              8, static_cast<std::size_t>(std::thread::hardware_concurrency())));
   return reduce_hybrid_streaming_for_control(
-      snaps_ex, n_param, top_limit, current_head_ids, parallelism);
+      snaps_ex, n_param, top_limit, current_head_ids,
+      current_head_generation, parallelism);
 }
 
 GlobalResultLB Coordinator::reduce_global_parallel_streaming_with_lb(

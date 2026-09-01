@@ -883,18 +883,15 @@ void test_hybrid_exact_head_and_tail_floor() {
   const auto snap = hybrid.snapshot_ex();
   require(snap.N_local == 8, "hybrid tracks combined local mass");
   require(snap.head_mass == 5, "hybrid exact head tracks seeded key exactly");
-  require(snap.head_size == 1, "hybrid reports head size");
-  require(snap.errors_from == snap.head_size,
-          "hybrid stores per-item errors only for the residual suffix");
-  require(snap.errors.size() == snap.candidates.size() - snap.head_size,
-          "hybrid omits redundant zero errors for exact-head records");
-  require(snap.cand_eps(0) == 0 && snap.cand_lb(0) == snap.candidates[0].est,
-          "hybrid exact-head prefix derives an exact interval without metadata");
-
-  const auto hot_item = std::find_if(snap.candidates.begin(), snap.candidates.end(),
-                                     [&](const hh::Cand& c) { return c.id == hot; });
-  require(hot_item != snap.candidates.end() && hot_item->est == 5,
-          "hybrid snapshot includes exact head count");
+  require(snap.head_records.size() == 1,
+          "hybrid emits one compact active-head record");
+  require(snap.head_records[0].slot == 0 && snap.head_records[0].count == 5,
+          "hybrid head report uses the stable dictionary slot and exact count");
+  require(snap.errors_from == 0 && snap.errors.size() == snap.candidates.size(),
+          "hybrid error metadata aligns only with residual candidates");
+  require(std::none_of(snap.candidates.begin(), snap.candidates.end(),
+                       [&](const hh::Cand& c) { return c.id == hot; }),
+          "hybrid residual report does not duplicate exact-head identifiers");
 
   hybrid.reconfigure(1, 1, 10, 0.25);
   const auto resized = hybrid.snapshot_ex();
@@ -910,14 +907,12 @@ void test_hybrid_exact_head_and_tail_floor() {
   const auto sparse_snap = sparse_head.snapshot_ex();
   require(sparse_admissions == 0,
           "replicated exact-head slots do not bind raw keys in worker-local state");
-  require(sparse_snap.head_size == 1, "hybrid emits only nonzero exact-head reports");
-  require(sparse_snap.cand_lb(0) == sparse_snap.candidates[0].est
-              && sparse_snap.cand_eps(0) == 0,
-          "head-only hybrid report exposes an exact interval");
-  const auto cold_item = std::find_if(sparse_snap.candidates.begin(), sparse_snap.candidates.end(),
-                                      [&](const hh::Cand& c) { return c.id == cold; });
-  require(cold_item == sparse_snap.candidates.end(),
-          "hybrid suppresses zero-count exact-head reports");
+  require(sparse_snap.head_records.size() == 1,
+          "hybrid emits only nonzero exact-head reports");
+  require(sparse_snap.head_records[0].count == 8,
+          "compact head report retains the exact count");
+  require(sparse_snap.candidates.empty(),
+          "head-only report carries no identifier-bearing candidates");
 
   hh::HybridSS compact_tail(2, 2, /*tail_per_item_eps=*/false);
   compact_tail.seed_head({hot, cold});
@@ -929,8 +924,7 @@ void test_hybrid_exact_head_and_tail_floor() {
   require(compact_snap.tail_sorted_by_id,
           "hybrid prepares its residual report in identity order");
   require(std::is_sorted(
-              compact_snap.candidates.begin()
-                  + static_cast<std::ptrdiff_t>(compact_snap.head_size),
+              compact_snap.candidates.begin(),
               compact_snap.candidates.end(),
               [](const hh::Cand& a, const hh::Cand& b) {
                 return a.id.b < b.id.b;
@@ -938,26 +932,13 @@ void test_hybrid_exact_head_and_tail_floor() {
           "hybrid residual report satisfies its sorted-tail contract");
   require(!compact_snap.has_error_bounds(), "hybrid compact tail omits per-candidate tail errors");
   require(compact_snap.has_sketch_error_bound(), "hybrid compact tail exports one shared tail error");
-  require(compact_snap.sketch_eps_from == compact_snap.head_size,
-          "hybrid compact tail applies shared error only after exact-head prefix");
+  require(compact_snap.sketch_eps_from == 0,
+          "hybrid compact tail applies its shared error to every residual record");
 
   hh::ArenaMap compact_map;
   compact_map.bind_bytes(hot, "hot");
   std::vector<hh::SnapshotEx> compact_snaps{compact_snap};
   std::vector<const hh::ArenaMap*> compact_maps{&compact_map};
-  const auto compact_reduced =
-      hh::Coordinator::reduce_global_with_lb(compact_snaps, 10);
-  hh::ReduceTelemetry streaming_telemetry;
-  const auto compact_streamed = hh::Coordinator::reduce_global_streaming_with_lb(
-      compact_snaps, 10, &streaming_telemetry);
-  hh::ReduceTelemetry hash_telemetry;
-  hh::Coordinator::reduce_global_with_lb(compact_snaps, 10, &hash_telemetry);
-  hh::ReduceTelemetry parallel_telemetry;
-  const auto compact_parallel = hh::Coordinator::reduce_global_parallel_streaming_with_lb(
-      compact_snaps, 10, &parallel_telemetry);
-  require_same_reduction(compact_reduced, compact_streamed);
-  require_same_reduction(compact_reduced, compact_parallel);
-
   std::vector<Id128> compact_head_ids{hot, cold};
   std::sort(compact_head_ids.begin(), compact_head_ids.end(), [](const Id128& a, const Id128& b) {
     return a.b < b.b;
@@ -968,22 +949,25 @@ void test_hybrid_exact_head_and_tail_floor() {
     compact_head_keys.push_back(id == hot ? "hot" : "cold");
   }
   const auto coordinated = hh::Coordinator::reduce_hybrid_streaming_for_control(
-      compact_snaps, 10, /*top_limit=*/10, compact_head_ids);
+      compact_snaps, 10, /*top_limit=*/10, compact_head_ids,
+      compact_snap.head_generation);
   const auto coordinated_parallel =
       hh::Coordinator::reduce_hybrid_parallel_streaming_for_control(
-          compact_snaps, 10, /*top_limit=*/10, compact_head_ids);
+          compact_snaps, 10, /*top_limit=*/10, compact_head_ids,
+          compact_snap.head_generation);
   const auto coordinated_parallel_reused =
       hh::Coordinator::reduce_hybrid_parallel_streaming_for_control(
-          compact_snaps, 10, /*top_limit=*/10, compact_head_ids);
+          compact_snaps, 10, /*top_limit=*/10, compact_head_ids,
+          compact_snap.head_generation);
   hh::ArenaMap headless_map;
   std::vector<const hh::ArenaMap*> headless_maps{&headless_map};
   const auto coordinated_headless =
       hh::Coordinator::reduce_hybrid_streaming_for_control(
-          compact_snaps, 10, /*top_limit=*/10, compact_head_ids);
+          compact_snaps, 10, /*top_limit=*/10, compact_head_ids,
+          compact_snap.head_generation);
   const auto* headless_hot = find_item(coordinated_headless.published, hot);
   require(headless_hot && headless_hot->key.empty(),
           "coordinated Hybrid reduction remains identifier-only");
-  require_same_reduction(compact_streamed, coordinated.published);
   require_same_reduction(coordinated.published, coordinated_parallel.published);
   require_same_hybrid_sizing_items(
       coordinated.residual_items, coordinated_parallel.residual_items);
@@ -1008,20 +992,36 @@ void test_hybrid_exact_head_and_tail_floor() {
   require(!coordinated.top_ids.empty() && coordinated.top_ids.front() == hot,
           "coordinated hybrid reducer retains ranked top ids");
 
-  hh::SnapshotEx residual_snap = compact_snap;
-  const std::size_t exact_prefix = residual_snap.head_size;
-  const bool residual_has_errors = residual_snap.has_error_bounds();
-  residual_snap.candidates.erase(
-      residual_snap.candidates.begin(),
-      residual_snap.candidates.begin() + static_cast<std::ptrdiff_t>(exact_prefix));
-  if (residual_has_errors) {
-    residual_snap.errors.erase(
-        residual_snap.errors.begin(),
-        residual_snap.errors.begin() + static_cast<std::ptrdiff_t>(exact_prefix));
+  auto stale_snap = compact_snap;
+  ++stale_snap.head_generation;
+  bool rejected_stale = false;
+  try {
+    (void)hh::Coordinator::reduce_hybrid_streaming_for_control(
+        {stale_snap}, 10, 10, compact_head_ids,
+        compact_snap.head_generation);
+  } catch (const std::runtime_error&) {
+    rejected_stale = true;
   }
-  residual_snap.head_size = 0;
+  require(rejected_stale,
+          "coordinator rejects a head report from a stale dictionary generation");
+
+  auto invalid_slot_snap = compact_snap;
+  invalid_slot_snap.head_records.front().slot =
+      static_cast<std::uint32_t>(compact_head_ids.size());
+  bool rejected_slot = false;
+  try {
+    (void)hh::Coordinator::reduce_hybrid_streaming_for_control(
+        {invalid_slot_snap}, 10, 10, compact_head_ids,
+        compact_snap.head_generation);
+  } catch (const std::runtime_error&) {
+    rejected_slot = true;
+  }
+  require(rejected_slot,
+          "coordinator rejects a compact report with an invalid head slot");
+
+  hh::SnapshotEx residual_snap = compact_snap;
+  residual_snap.head_records.clear();
   residual_snap.head_mass = 0;
-  if (residual_snap.has_sketch_error_bound()) residual_snap.sketch_eps_from = 0;
   const auto expected_residual = hh::Coordinator::reduce_global_streaming_with_lb(
       {residual_snap}, 10);
   require(expected_residual.items.size() == coordinated.residual_items.size(),
@@ -1065,13 +1065,10 @@ void test_hybrid_exact_head_and_tail_floor() {
   require(legacy_sizing.q_next == coordinated_sizing.q_next &&
               legacy_sizing.q_req == coordinated_sizing.q_req,
           "precomputed residual components preserve the sizing decision");
-  require(streaming_telemetry.total_peak_bytes > 0,
-          "streaming reducer reports modeled resident memory");
-  require(hash_telemetry.ingress_bytes > 0 && streaming_telemetry.ingress_bytes > 0,
-          "reducers report resident ingress separately from working memory");
-  require(parallel_telemetry.ingress_bytes >= streaming_telemetry.ingress_bytes,
-          "parallel reducer accounts for all concurrently active merge shards");
-  const auto* hot_reduced = find_item(compact_reduced, hot);
+  require(coordinated.telemetry.total_peak_bytes > 0
+              && coordinated.telemetry.ingress_bytes > 0,
+          "coordinated reducer reports compact ingress and resident memory");
+  const auto* hot_reduced = find_item(coordinated.published, hot);
   require(hot_reduced && hot_reduced->cert_lb == hot_reduced->est,
           "hybrid compact exact head keeps exact lower bound");
 
@@ -1090,15 +1087,11 @@ void test_hybrid_exact_head_and_tail_floor() {
   const std::vector<const hh::ArenaMap*> exact_maps{&exact_map, &zero_map};
   const std::vector<Id128> exact_head_ids{hot};
   const std::vector<std::string> exact_head_keys{"hot"};
-  const auto exact_hash = hh::Coordinator::reduce_global_with_lb(
-      exact_snaps, 10, nullptr, false);
-  const auto exact_stream = hh::Coordinator::reduce_global_streaming_with_lb(
-      exact_snaps, 10, nullptr, false);
   const auto exact_coordinated =
       hh::Coordinator::reduce_hybrid_streaming_for_control(
-          exact_snaps, 10, 10, exact_head_ids);
-  for (const auto* result :
-       {&exact_hash, &exact_stream, &exact_coordinated.published}) {
+          exact_snaps, 10, 10, exact_head_ids,
+          exact_snaps.front().head_generation);
+  for (const auto* result : {&exact_coordinated.published}) {
     const auto* item = find_item(*result, hot);
     require(item && item->est == 7 && item->lb == 7
                 && item->cert_lb == 7 && item->cert_ub == 7,
@@ -1135,11 +1128,12 @@ void test_hybrid_generation_checked_head_delta() {
             [](const Id128& a, const Id128& b) { return a.b < b.b; });
   for (const auto& id : expected) hybrid.update(id, 1);
   const auto snapshot = hybrid.snapshot_ex();
-  require(snapshot.head_size == expected.size(),
+  require(snapshot.head_records.size() == expected.size(),
           "delta-installed head reports every active slot");
   for (std::size_t i = 0; i < expected.size(); ++i) {
-    require(snapshot.candidates[i].id == expected[i],
-            "delta installation matches a canonical full dictionary");
+    require(snapshot.head_records[i].slot == i
+                && snapshot.head_records[i].count == 1,
+            "delta installation emits canonical compact dictionary slots");
   }
 
   hh::ExactHeadDelta stale = delta;

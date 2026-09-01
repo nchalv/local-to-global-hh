@@ -66,16 +66,17 @@ SnapshotEx HybridSS::snapshot_ex() const {
   sx.N_local = N_local_;
   sx.q_local = tail_ ? tail_->capacity() : 0;
   sx.head_mass = head_mass();
+  sx.head_generation = head_.generation();
 
-  // Active head entries: exact => lb=est=count. Seeded head keys with zero
-  // local mass are omitted; the coordinator infers absent head slots as zero.
-  sx.candidates.reserve(head_.size() + tail_->capacity());
+  // Active head entries use their stable dictionary slots. Seeded head keys
+  // with zero local mass are omitted without renumbering later slots.
+  sx.head_records.reserve(head_.size());
   for (std::size_t slot = 0; slot < head_.size(); ++slot) {
     const auto count = head_.count_at(slot);
     if (count == 0) continue;
-    sx.candidates.push_back({head_.ids()[slot], count});
+    sx.head_records.push_back(
+        {static_cast<std::uint32_t>(slot), count});
   }
-  sx.head_size = sx.candidates.size();
   // Append directly from the resident tail. Sorting only compact node indices
   // avoids materializing a second full candidate/error record array.
   tail_->append_snapshot_ex(sx, /*sort_by_id=*/true);

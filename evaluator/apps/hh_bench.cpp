@@ -1457,10 +1457,10 @@ int main(int argc, char** argv) {
               methods[gi].reducer != ReducerMode::Hash) {
             // Hybrid exact-head membership is shared state between workers and
             // the coordinator. Head entries therefore need only transmit a
-            // compact slot identifier plus the exact count; full Id128 keys are
-            // still used internally by this benchmark to execute the merge.
-            const std::size_t head_records = std::min(s.head_size, s.candidates.size());
-            const std::size_t tail_records = s.candidates.size() - head_records;
+            // compact slot identifier plus the exact count. Residual records
+            // retain full Id128 keys because they have no shared slot mapping.
+            const std::size_t head_records = s.head_records.size();
+            const std::size_t tail_records = s.candidates.size();
             worker_report_bytes += head_records * kHybridHeadRecordBytes
                                  + tail_records * kCandidateBytes;
             if (s.has_error_bounds()) {
@@ -1494,6 +1494,7 @@ int main(int argc, char** argv) {
           auto coordinated = Coordinator::reduce_hybrid_streaming_for_control(
               snaps_by_group[gi], A.n_param, top_limit,
               hybrid_installed_heads[gi],
+              hybrid_head_generations[gi],
               methods[gi].reducer == ReducerMode::ParallelStreaming
                   ? A.reducer_workers
                   : 1);
@@ -1760,7 +1761,7 @@ int main(int argc, char** argv) {
             : A.n_param;
         hybrid_control[gi] = Coordinator::reduce_hybrid_streaming_for_control(
             snaps_for_hybrid, A.n_param, top_limit,
-            hybrid_installed_heads[gi]);
+            hybrid_installed_heads[gi], hybrid_head_generations[gi]);
       }
       auto& coordinated = *hybrid_control[gi];
       const std::size_t topk =

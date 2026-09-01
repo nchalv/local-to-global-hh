@@ -24,11 +24,22 @@ struct CandErr {
 };
 static_assert(sizeof(CandErr) == sizeof(std::uint32_t));
 
+// Compact exact-head wire record. The slot is interpreted against the shared,
+// generation-checked head dictionary; inactive slots are simply omitted.
+struct HeadRecord {
+  std::uint32_t slot;
+  std::uint32_t count;
+};
+static_assert(sizeof(HeadRecord) == 2 * sizeof(std::uint32_t));
+
 struct SnapshotEx {
   std::uint64_t N_local{0};
-  std::vector<Cand> candidates;   // always present
-  // Optional suffix-aligned per-candidate errors. Exact Hybrid-head records
-  // precede errors_from and therefore need no explicit zero-error entries.
+  // Hybrid uses compact slot/count head records and identifier-bearing residual
+  // candidates. Other sketches leave head_records empty.
+  std::vector<HeadRecord> head_records;
+  std::uint64_t head_generation{0};
+  std::vector<Cand> candidates;
+  // Optional suffix-aligned per-candidate errors.
   std::vector<CandErr> errors;
   std::size_t errors_from{0};
   // Optional compact SS error contract. If errors is empty and sketch_eps > 0,
@@ -37,11 +48,13 @@ struct SnapshotEx {
   std::size_t sketch_eps_from{0};
   bool has_sketch_eps{false};
   std::size_t q_local{0};       // capacity (entries) if applicable (SS), else 0
-  // Optional hybrid telemetry (head mass/size); non-hybrid sketches leave at 0.
+  // Optional hybrid telemetry; non-hybrid sketches leave it at zero.
   std::uint64_t head_mass{0};
-  std::size_t   head_size{0};
-  // Hybrid report contract: candidates after head_size are ordered by Id128.
-  // This lets the coordinator perform an m-way merge without sorting reports.
+  // Compatibility for generic identifier-bearing exact prefixes. HybridSS
+  // emits compact head_records instead and leaves this at zero.
+  std::size_t head_size{0};
+  // Hybrid residual candidates are ordered by Id128, allowing an m-way merge
+  // without sorting reports at the coordinator.
   bool tail_sorted_by_id{false};
 
   bool has_error_bounds() const {
