@@ -32,9 +32,18 @@ after a run.
 ## Quick start
 
 ```bash
-./scripts/check_environment.sh
-./scripts/build.sh
+python3 -m venv .hh-venv
+. .hh-venv/bin/activate
+pip install -r requirements.txt
+./artifact test
+./artifact smoke
 ```
 
-See `docs/REPRODUCIBILITY.md` for the staged commands for data preparation,
-calibration, final evaluation, and figure/table generation.
+The smoke workflow generates a small deterministic stream, evaluates static and
+adaptive Space-Saving, HeavyLocker, and Hybrid, and validates the resulting
+per-window CSV. It requires no external data and normally completes within a
+few minutes.
+
+See `docs/REPRODUCIBILITY.md` for CAIDA preparation and the staged paper and
+supplementary workflows. `docs/EXPERIMENTS.md` maps commands to experiment
+families and explains which exploratory analyses are intentionally excluded.

@@ -1,0 +1,20 @@
+{
+  "seed": 42,
+  "window_size": 10000,
+  "num_keys": 1000,
+  "n": 50,
+  "m": 4,
+  "output_dir": "generated",
+  "stream_file": "stream.pkl.gz",
+  "summary_file": "summary.pkl.gz",
+  "stream_json_file": "stream.json.gz",
+  "plot_format": "png",
+  "plot_distr": false,
+  "plot_skew": false,
+  "hot_key_drift_pct": 10,
+  "max_rel_freq_delta_pct": 20,
+  "new_key_pct": 5,
+  "newborn_hot_birth_prob": 0.02,
+  "max_hot_newborn_frac": 0.05,
+  "save_windows_separately": false
+}

@@ -20,8 +20,10 @@ The CAIDA dataset must be cited as:
 > https://data.caida.org/datasets/passive-2018
 
 Raw traces and derived streams are excluded from this repository. The exact
-source paths are supplied through environment variables in the reproduction
-scripts.
+source paths are supplied through `CAIDA_COUNTS_A` and `CAIDA_COUNTS_B` when
+running `./artifact prepare-caida`. The command validates the schema, requires
+200 contiguous windows in each slice, and records SHA-256 checksums before any
+partition-specific stream is generated.
 
 ## Synthetic data
 

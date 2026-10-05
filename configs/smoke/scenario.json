@@ -1,0 +1,10 @@
+[
+  {
+    "type": "zipfian",
+    "duration": 4,
+    "params": {
+      "s": 1.05
+    },
+    "n": 50
+  }
+]

@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 
 evaluator/build/
+generated/
 generator/generated/
 generator/logs/
 data_preparation/generated/

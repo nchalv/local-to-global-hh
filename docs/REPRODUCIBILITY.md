@@ -2,31 +2,43 @@
 
 Run commands from the artifact root.
 
-1. Install the Python dependencies and verify the C++ toolchain:
+## Quick validation
+
+Install the Python dependencies and run the self-contained validation:
 
    ```bash
    python3 -m venv .hh-venv
    . .hh-venv/bin/activate
    pip install -r requirements.txt
-   ./scripts/check_environment.sh
+   ./artifact test
+   ./artifact smoke
    ```
 
-2. Build the evaluator:
+The smoke workload is deterministic and uses bundled configurations. Its run
+directory contains the exact method string, environment metadata, generator
+log, benchmark log, raw per-window CSV, and validation report. The symbolic
+link `results/runs/smoke-latest` identifies the newest run.
+
+## CAIDA-dependent reproduction
+
+1. Prepare normalized CAIDA counts according to `docs/DATASETS.md`, then stage
+   them through the validated data boundary:
 
    ```bash
-   ./scripts/build.sh
+   CAIDA_COUNTS_A=/path/to/caida-a.jsonl \
+   CAIDA_COUNTS_B=/path/to/caida-b.jsonl \
+   ./artifact prepare-caida
    ```
 
-3. Prepare normalized CAIDA counts according to `docs/DATASETS.md`.
-
-4. Generate the evaluator-ready streams with the versioned generator
-   configurations. The final paper-facing commands will be provided by
-   `scripts/prepare_caida.sh` once the external data path is set.
+The long-running paper and supplementary matrices are listed in
+`docs/EXPERIMENTS.md`. Their orchestration is kept separate from the quick
+validation path because visibility-suppression generation at large partition
+counts can require several hours.
 
 5. Run calibration and final comparisons through the staged scripts under
    `scripts/`. Each script writes a configuration snapshot, logs, CSV summaries,
    and plots beneath `results/`.
 
-Every stage is independently rerunnable. Existing outputs are never used as
-implicit input; paths and configuration values are recorded in each run
-directory.
+Every result directory records its configuration, logs, and environment. Raw
+per-window CSVs remain separate from summaries and plots so aggregate claims
+can be independently recomputed.

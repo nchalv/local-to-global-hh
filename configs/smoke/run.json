@@ -1,0 +1,5 @@
+{
+  "generation": "generation.json",
+  "scenario": "scenario.json",
+  "partitioning": "partitioning.json"
+}
