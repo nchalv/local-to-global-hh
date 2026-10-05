@@ -19,6 +19,15 @@ directory contains the exact method string, environment metadata, generator
 log, benchmark log, raw per-window CSV, and validation report. The symbolic
 link `results/runs/smoke-latest` identifies the newest run.
 
+The supplementary temporal-controller study is also self-contained:
+
+```bash
+./artifact temporal-controller
+```
+
+It generates four deterministic difficulty schedules and evaluates the four
+downward-sizing policies documented in `docs/SUPPLEMENTARY_RESULTS.md`.
+
 ## CAIDA-dependent reproduction
 
 1. Prepare normalized CAIDA counts according to `docs/DATASETS.md`, then stage

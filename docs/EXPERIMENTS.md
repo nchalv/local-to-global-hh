@@ -11,6 +11,7 @@ are run from the repository root through `./artifact`.
 | Environment | `./artifact check` | No | Check required tools and Python packages. |
 | Build and tests | `./artifact test` | No | Build the evaluator and run its unit tests. |
 | Smoke test | `./artifact smoke` | No | Generate a small deterministic stream and validate all principal methods. |
+| Controller ablation | `./artifact temporal-controller` | No | Compare four downward-sizing policies under scheduled difficulty changes. |
 | Stage CAIDA | `./artifact prepare-caida` | Yes | Validate and stage the two normalized CAIDA slices. |
 
 The smoke test is the recommended first evaluation. It is not evidence used in
@@ -37,8 +38,9 @@ The supplementary matrix retains experiments that improve transparency but
 were omitted from the paper for space:
 
 - the complete margin sweep under visibility suppression;
-- round-robin temporal-controller policy ablations;
+- temporal-controller policy ablations under scheduled difficulty changes;
 - partition-local cardinality and residual-mass diagnostics;
+- separate per-method, per-placement error and memory trajectories;
 - detailed serial/parallel reducer and exact-head delta measurements.
 
 Ready aggregate outputs and their plot-only regeneration commands are described
@@ -46,7 +48,9 @@ in `docs/SUPPLEMENTARY_RESULTS.md`.
 
 The artifact deliberately excludes discarded analyses whose methodology or
 design no longer supports the submitted system: ambiguity adjustment,
-single-process insertion-throughput comparisons, obsolete MILP placements,
-the Twitter workload, and rejected synthetic end-to-end scenarios. Ambiguity
-adjustment was removed from the final method after it failed to provide a
-consistent resource--quality improvement.
+single-process insertion-throughput comparisons, standalone obsolete MILP
+baselines, the Twitter workload, and rejected synthetic end-to-end scenarios.
+The controller ablation retains MILP-generated placement changes only as
+controlled synthetic difficulty transitions, not as final comparison
+baselines. Ambiguity adjustment was removed from the final method after it
+failed to provide a consistent resource--quality improvement.

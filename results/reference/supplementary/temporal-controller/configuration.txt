@@ -1,0 +1,12 @@
+experiment=temporal_controller_ablation
+datasets=temporal_guard_step_schedule_n200 temporal_guard_ramp_schedule_n200 temporal_guard_burst_schedule_n200 temporal_guard_oscillation_schedule_n200
+m=100
+n=200
+epsilon_m=0.15
+alpha=0.95
+memory_kib=128
+topk=200
+modes=probing residual_guarded_probing pressure_gated_comfort_probing comfort_guided_probing
+sufficient_observations=2
+ambiguity_adjustment=off
+ss_error_mode=per-item

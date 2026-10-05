@@ -12,6 +12,8 @@ Commands:
   build          Build the evaluator in release mode.
   test           Build and run the C++ and Python unit tests.
   smoke          Run a small bundled end-to-end validation.
+  temporal-controller
+                 Generate and run the supplementary controller ablation.
   prepare-caida  Stage normalized CAIDA-A and CAIDA-B window counts.
   help           Show this message.
 
@@ -35,6 +37,9 @@ case "${command}" in
     ;;
   smoke)
     exec "${ROOT}/scripts/run_smoke.sh" "$@"
+    ;;
+  temporal-controller)
+    exec "${ROOT}/scripts/run_temporal_controller.sh" "$@"
     ;;
   prepare-caida)
     exec "${ROOT}/scripts/prepare_caida.sh" "$@"
