@@ -37,12 +37,16 @@ The supplementary matrix retains experiments that improve transparency but
 were omitted from the paper for space:
 
 - the complete margin sweep under visibility suppression;
-- ambiguity adjustment enabled and disabled on the same CAIDA-A grid;
 - round-robin temporal-controller policy ablations;
 - partition-local cardinality and residual-mass diagnostics;
 - detailed serial/parallel reducer and exact-head delta measurements.
 
-The artifact deliberately excludes discarded analyses whose methodology does
-not support a paper claim: single-process insertion-throughput comparisons,
-obsolete MILP placements, the Twitter workload, and rejected synthetic
-end-to-end scenarios.
+Ready aggregate outputs and their plot-only regeneration commands are described
+in `docs/SUPPLEMENTARY_RESULTS.md`.
+
+The artifact deliberately excludes discarded analyses whose methodology or
+design no longer supports the submitted system: ambiguity adjustment,
+single-process insertion-throughput comparisons, obsolete MILP placements,
+the Twitter workload, and rejected synthetic end-to-end scenarios. Ambiguity
+adjustment was removed from the final method after it failed to provide a
+consistent resource--quality improvement.

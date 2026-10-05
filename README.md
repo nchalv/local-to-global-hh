@@ -47,3 +47,5 @@ few minutes.
 See `docs/REPRODUCIBILITY.md` for CAIDA preparation and the staged paper and
 supplementary workflows. `docs/EXPERIMENTS.md` maps commands to experiment
 families and explains which exploratory analyses are intentionally excluded.
+Ready aggregate outputs and additional plots are documented in
+`docs/SUPPLEMENTARY_RESULTS.md`.
