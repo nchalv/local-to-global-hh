@@ -1,8 +1,9 @@
-# Experiment Catalog
+# Evaluation Scope
 
-This artifact separates the experiments retained in the paper from additional
-diagnostics that support design decisions or expose negative results. Commands
-are run from the repository root through `./artifact`.
+The evaluation has three distinct levels. Quick validation checks that the
+software builds and that all principal methods execute. Committed reference
+results support inspection without redistributing CAIDA. Full reproduction
+recreates the long-running CAIDA-dependent matrices.
 
 ## Reviewer workflow
 
@@ -11,6 +12,7 @@ are run from the repository root through `./artifact`.
 | Environment | `./artifact check` | No | Check required tools and Python packages. |
 | Build and tests | `./artifact test` | No | Build the evaluator and run its unit tests. |
 | Smoke test | `./artifact smoke` | No | Generate a small deterministic stream and validate all principal methods. |
+| Reference evidence | `./artifact verify-results` | No | Verify the integrity of committed CSV and plot outputs. |
 | Controller ablation | `./artifact temporal-controller` | No | Compare four downward-sizing policies under scheduled difficulty changes. |
 | Stage CAIDA | `./artifact prepare-caida` | Yes | Validate and stage the two normalized CAIDA slices. |
 
@@ -18,7 +20,7 @@ The smoke test is the recommended first evaluation. It is not evidence used in
 the paper; it verifies the complete generator--evaluator--summary path on a
 small bundled configuration.
 
-## Experiments retained in the paper
+## Primary paper evaluation
 
 The paper reproduction matrix covers:
 
@@ -32,19 +34,19 @@ The paper reproduction matrix covers:
 Each stage writes raw per-window CSV files, an aggregate summary, plots, logs,
 and a configuration snapshot beneath `results/runs/`.
 
-## Supplementary experiments
+## Retained supplementary evidence
 
 The supplementary matrix retains experiments that improve transparency but
 were omitted from the paper for space:
 
-- the complete margin sweep under visibility suppression;
 - temporal-controller policy ablations under scheduled difficulty changes;
 - partition-local cardinality and residual-mass diagnostics;
 - separate per-method, per-placement error and memory trajectories;
 - detailed serial/parallel reducer and exact-head delta measurements.
 
-Ready aggregate outputs and their plot-only regeneration commands are described
-in `docs/SUPPLEMENTARY_RESULTS.md`.
+Ready outputs are ordered and interpreted in `results/reference/README.md`.
+Plot-only regeneration commands are collected in
+`docs/SUPPLEMENTARY_RESULTS.md`.
 
 The artifact deliberately excludes discarded analyses whose methodology or
 design no longer supports the submitted system: ambiguity adjustment,

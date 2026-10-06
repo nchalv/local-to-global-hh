@@ -14,7 +14,7 @@ datasets=(
 "${ROOT}/scripts/check_environment.sh"
 
 for dataset in "${datasets[@]}"; do
-  stream_dir="${ROOT}/generator/generated/runs/${dataset}/streams"
+  stream_dir="${ROOT}/generated/runs/${dataset}/streams"
   if [[ "${REGENERATE:-0}" == "1" || ! -d "${stream_dir}" ]]; then
     python3 "${ROOT}/generator/main.py" \
       --run-config "${ROOT}/generator/config/runs/${dataset}.json" \

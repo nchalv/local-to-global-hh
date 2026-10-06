@@ -26,15 +26,15 @@ CLEAN_OUTPUT="${CLEAN_OUTPUT:-1}"
 DRY_RUN="${DRY_RUN:-0}"
 
 declare -A STREAMS=(
-  [round_robin_n200]="${PROJECT_ROOT}/generator/generated/runs/calibration_synthetic_round_robin_n200/streams"
-  [milp_certificate_adversary_n200]="${PROJECT_ROOT}/generator/generated/runs/calibration_synthetic_milp_certificate_adversary_n200/streams"
-  [temporal_guard_step_schedule_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_guard_step_schedule_n200/streams"
-  [temporal_guard_ramp_schedule_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_guard_ramp_schedule_n200/streams"
-  [temporal_guard_burst_schedule_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_guard_burst_schedule_n200/streams"
-  [temporal_guard_oscillation_schedule_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_guard_oscillation_schedule_n200/streams"
-  [temporal_pressure_step_locality_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_pressure_step_locality_n200/streams"
-  [temporal_pressure_ramp_locality_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_pressure_ramp_locality_n200/streams"
-  [temporal_pressure_burst_locality_n200]="${PROJECT_ROOT}/generator/generated/runs/temporal_pressure_burst_locality_n200/streams"
+  [round_robin_n200]="${PROJECT_ROOT}/generated/runs/calibration_synthetic_round_robin_n200/streams"
+  [milp_certificate_adversary_n200]="${PROJECT_ROOT}/generated/runs/calibration_synthetic_milp_certificate_adversary_n200/streams"
+  [temporal_guard_step_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_step_schedule_n200/streams"
+  [temporal_guard_ramp_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_ramp_schedule_n200/streams"
+  [temporal_guard_burst_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_burst_schedule_n200/streams"
+  [temporal_guard_oscillation_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_oscillation_schedule_n200/streams"
+  [temporal_pressure_step_locality_n200]="${PROJECT_ROOT}/generated/runs/temporal_pressure_step_locality_n200/streams"
+  [temporal_pressure_ramp_locality_n200]="${PROJECT_ROOT}/generated/runs/temporal_pressure_ramp_locality_n200/streams"
+  [temporal_pressure_burst_locality_n200]="${PROJECT_ROOT}/generated/runs/temporal_pressure_burst_locality_n200/streams"
 )
 
 declare -A N_PARAMS=(

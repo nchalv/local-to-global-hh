@@ -44,7 +44,7 @@ The long-running paper and supplementary matrices are listed in
 validation path because visibility-suppression generation at large partition
 counts can require several hours.
 
-5. Run calibration and final comparisons through the staged scripts under
+2. Run calibration and final comparisons through the staged scripts under
    `scripts/`. Each script writes a configuration snapshot, logs, CSV summaries,
    and plots beneath `results/`.
 

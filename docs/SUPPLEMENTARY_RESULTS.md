@@ -1,31 +1,14 @@
 # Supplementary Results
 
 The files under `results/reference/supplementary/` are ready-to-inspect
-aggregate outputs. They are not additional claims from the paper. They expose
-supporting diagnostics and systems measurements that were omitted for space.
-No CAIDA packet data, raw keys, or partitioned streams are distributed.
+supporting diagnostics and systems measurements. Start with
+`results/reference/README.md`, which explains the role and evidence level of
+each bundle. No CAIDA packet data, raw keys, or partitioned streams are
+distributed.
 
 The reference CSVs were produced by research-workspace commit
 `f40543fa5cd3d2e8b0a7945f124d95c8bd10ac27`. Each plot can be regenerated from
 its committed aggregate or per-window CSVs without rerunning the benchmark.
-
-## Margin sensitivity under visibility suppression
-
-Directory: `results/reference/supplementary/margin-visibility/`
-
-This extends the paper's round-robin margin study to the placement that
-suppresses the local evidence used by HeavyLocker. Across (n=200,400,600,800),
-the selected Hybrid setting retains a favorable quality--memory position. The
-complete curve also shows why the selected margins should be interpreted as
-operating points rather than universally optimal constants.
-
-Regenerate the ready plot:
-
-```bash
-python3 experiments/end_to_end/plot_supplementary_margin.py \
-  --summary results/reference/supplementary/margin-visibility/summary.csv \
-  --out results/reference/supplementary/margin-visibility
-```
 
 ## Partition-local structure
 

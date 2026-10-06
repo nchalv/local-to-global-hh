@@ -14,7 +14,7 @@ record_environment "${result_dir}/environment.txt"
 
 cd "${ROOT}"
 python3 generator/main.py \
-  --run-config configs/smoke/run.json \
+  --run-config generator/config/smoke/run.json \
   --run-name "smoke-${stamp}" \
   --no-plots | tee "${result_dir}/generator.log"
 
