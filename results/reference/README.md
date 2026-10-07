@@ -14,7 +14,8 @@ normalized CAIDA inputs described in `docs/DATASETS.md`.
 
 1. **Controller policy selection**
    (`supplementary/temporal-controller/`): compares four downward-sizing
-   policies under controlled changes in local sketch difficulty.
+   policies under controlled changes in global stream difficulty and fixed
+   round-robin placement.
 2. **Per-window adaptive behavior**
    (`supplementary/window-trajectories/`): contrasts Hybrid's changing
    allocation with HeavyLocker's fixed allocation on CAIDA-B.

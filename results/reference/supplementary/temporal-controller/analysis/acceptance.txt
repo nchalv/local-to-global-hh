@@ -1,0 +1,17 @@
+PASS window_count_160
+PASS static_results_cover_all_windows
+PASS controller_results_cover_all_windows
+PASS constant_mass_120000
+PASS constant_cardinality_20000
+PASS harder_than_easy_at_qn
+PASS q4n_improves_hard_error
+PASS every_controller_moves_capacity
+PASS controller_recall_at_least_0.999
+q=n hard error: 0.026820
+q=n easy error: 0.009958
+q=4n hard error: 0.000000
+comfort_guided_probing q/n range: 1.000--4.535
+pressure_gated_comfort_probing q/n range: 1.000--4.535
+probing q/n range: 1.000--4.535
+residual_guarded_probing q/n range: 1.000--4.535
+minimum controller HH recall: 1.000000

@@ -24,14 +24,12 @@ SS_EPS="${SS_EPS:-per-item}"
 RUN_MODES=(${RUN_MODES:-probing residual_guarded_probing pressure_gated_comfort_probing comfort_guided_probing})
 CLEAN_OUTPUT="${CLEAN_OUTPUT:-1}"
 DRY_RUN="${DRY_RUN:-0}"
+BUILD="${BUILD:-1}"
+STREAM_OVERRIDE="${STREAM_OVERRIDE:-}"
+N_PARAM_OVERRIDE="${N_PARAM_OVERRIDE:-}"
 
 declare -A STREAMS=(
   [round_robin_n200]="${PROJECT_ROOT}/generated/runs/calibration_synthetic_round_robin_n200/streams"
-  [milp_certificate_adversary_n200]="${PROJECT_ROOT}/generated/runs/calibration_synthetic_milp_certificate_adversary_n200/streams"
-  [temporal_guard_step_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_step_schedule_n200/streams"
-  [temporal_guard_ramp_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_ramp_schedule_n200/streams"
-  [temporal_guard_burst_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_burst_schedule_n200/streams"
-  [temporal_guard_oscillation_schedule_n200]="${PROJECT_ROOT}/generated/runs/temporal_guard_oscillation_schedule_n200/streams"
   [temporal_pressure_step_locality_n200]="${PROJECT_ROOT}/generated/runs/temporal_pressure_step_locality_n200/streams"
   [temporal_pressure_ramp_locality_n200]="${PROJECT_ROOT}/generated/runs/temporal_pressure_ramp_locality_n200/streams"
   [temporal_pressure_burst_locality_n200]="${PROJECT_ROOT}/generated/runs/temporal_pressure_burst_locality_n200/streams"
@@ -39,21 +37,20 @@ declare -A STREAMS=(
 
 declare -A N_PARAMS=(
   [round_robin_n200]=200
-  [milp_certificate_adversary_n200]=200
-  [temporal_guard_step_schedule_n200]=200
-  [temporal_guard_ramp_schedule_n200]=200
-  [temporal_guard_burst_schedule_n200]=200
-  [temporal_guard_oscillation_schedule_n200]=200
   [temporal_pressure_step_locality_n200]=200
   [temporal_pressure_ramp_locality_n200]=200
   [temporal_pressure_burst_locality_n200]=200
 )
 
-DATASETS=(${DATASETS:-temporal_guard_step_schedule_n200 temporal_guard_ramp_schedule_n200 temporal_guard_burst_schedule_n200 temporal_guard_oscillation_schedule_n200})
+DATASETS=(${DATASETS:-})
+if (( ${#DATASETS[@]} == 0 )); then
+  echo "no datasets selected; use the artifact temporal-controller entry point" >&2
+  exit 2
+fi
 
 cd "${PROJECT_ROOT}"
 
-if [[ "${DRY_RUN}" != "1" ]]; then
+if [[ "${DRY_RUN}" != "1" && "${BUILD}" == "1" ]]; then
   cmake -S evaluator -B evaluator/build -DCMAKE_BUILD_TYPE=Release
   cmake --build evaluator/build --target hh_bench
 fi
@@ -85,16 +82,20 @@ if [[ "${DRY_RUN}" != "1" ]]; then
 fi
 
 for dataset in "${DATASETS[@]}"; do
-  if [[ -z "${STREAMS[$dataset]:-}" ]]; then
+  if [[ -z "${STREAM_OVERRIDE}" && -z "${STREAMS[$dataset]:-}" ]]; then
     echo "unknown dataset: ${dataset}" >&2
     echo "known datasets: ${!STREAMS[*]}" >&2
     exit 1
   fi
 
-  n_param="${N_PARAMS[$dataset]}"
-  stream="${STREAMS[$dataset]}"
-  if [[ ! -d "${stream}" ]]; then
-    echo "missing generated stream directory: ${stream}" >&2
+  n_param="${N_PARAM_OVERRIDE:-${N_PARAMS[$dataset]:-}}"
+  stream="${STREAM_OVERRIDE:-${STREAMS[$dataset]:-}}"
+  if [[ -z "${n_param}" ]]; then
+    echo "missing n parameter for dataset: ${dataset}" >&2
+    exit 1
+  fi
+  if [[ ! -e "${stream}" ]]; then
+    echo "missing generated stream input: ${stream}" >&2
     exit 1
   fi
 
@@ -173,8 +174,3 @@ fi
 
 python3 experiments/calibration/summarize_temporal_grid.py --root "${CSV_DIR}" > "${OUT_DIR}/summary.csv"
 echo "summary: ${OUT_DIR}/summary.csv"
-python3 experiments/calibration/plot_temporal_grid.py \
-  --summary "${OUT_DIR}/summary.csv" \
-  --csv-root "${CSV_DIR}" \
-  --epsilon-m "${EPSILON_M}" \
-  --out "${OUT_DIR}/plots"

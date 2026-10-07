@@ -1,0 +1,57 @@
+kind,method,phase,windows,threshold_normalized_error,q_over_n,hh_recall,hh_f1,candidate_hh_recall,service_violation_rate
+static,ss[policy=static q=n],moderate_warmup,20,0.025225,1,1,0.7505828831,1,nan
+static,ss[policy=static q=n],hard_step,25,0.02682,1,1,0.5956474296,1,nan
+static,ss[policy=static q=n],recovery_ramp,25,0.02330694444,1,1,0.7637714074,1,nan
+static,ss[policy=static q=n],easy_plateau,20,0.009958333333,1,1,0.9738562092,1,nan
+static,ss[policy=static q=n],hard_burst,10,0.02676666667,1,1,0.5941121023,1,nan
+static,ss[policy=static q=n],easy_recovery,20,0.01079166667,1,1,0.9882352941,1,nan
+static,ss[policy=static q=n],oscillation,30,0.01822638889,1,1,0.7923151679,1,nan
+static,ss[policy=static q=n],final_moderate,10,0.02619166667,1,1,0.7336158376,1,nan
+static,ss[policy=static q=2n],moderate_warmup,20,0.002558333333,2,1,0.9884615385,1,nan
+static,ss[policy=static q=2n],hard_step,25,5.666666667e-05,2,1,1,1,nan
+static,ss[policy=static q=2n],recovery_ramp,25,0.0007441666667,2,1,1,1,nan
+static,ss[policy=static q=2n],easy_plateau,20,0.0005729166667,2,1,1,1,nan
+static,ss[policy=static q=2n],hard_burst,10,7.083333333e-05,2,1,1,1,nan
+static,ss[policy=static q=2n],easy_recovery,20,0.0008333333333,2,1,1,1,nan
+static,ss[policy=static q=2n],oscillation,30,0.0003847222222,2,1,1,1,nan
+static,ss[policy=static q=2n],final_moderate,10,0.001225,2,1,1,1,nan
+static,ss[policy=static q=4n],moderate_warmup,20,0.001333333333,4,1,0.9884615385,1,nan
+static,ss[policy=static q=4n],hard_step,25,0,4,1,1,1,nan
+static,ss[policy=static q=4n],recovery_ramp,25,0,4,1,1,1,nan
+static,ss[policy=static q=4n],easy_plateau,20,2.083333333e-05,4,1,1,1,nan
+static,ss[policy=static q=4n],hard_burst,10,0,4,1,1,1,nan
+static,ss[policy=static q=4n],easy_recovery,20,0,4,1,1,1,nan
+static,ss[policy=static q=4n],oscillation,30,6.944444444e-06,4,1,1,1,nan
+static,ss[policy=static q=4n],final_moderate,10,8.333333333e-06,4,1,1,1,nan
+adaptive,comfort_guided_probing,moderate_warmup,20,0.001441666667,3.23325,1,0.9884615385,1,0.05
+adaptive,comfort_guided_probing,hard_step,25,0.004775,1.416,1,0.9562133359,1,0.04
+adaptive,comfort_guided_probing,recovery_ramp,25,0.0063825,1.3598,1,0.9798628044,1,0.08
+adaptive,comfort_guided_probing,easy_plateau,20,0.002822916667,2.597,1,1,1,0.05
+adaptive,comfort_guided_probing,hard_burst,10,2.5e-05,2.5,1,1,1,0
+adaptive,comfort_guided_probing,easy_recovery,20,0.004052083333,1.787,1,1,1,0.05
+adaptive,comfort_guided_probing,oscillation,30,0.0026,1.965166667,1,0.9900129715,1,0.03333333333
+adaptive,comfort_guided_probing,final_moderate,10,5.833333333e-05,3.75,1,1,1,0
+adaptive,pressure_gated_comfort_probing,moderate_warmup,20,0.001925,2.93325,1,0.9884615385,1,0.05
+adaptive,pressure_gated_comfort_probing,hard_step,25,0.00898,1.1388,1,0.9069955688,1,0.04
+adaptive,pressure_gated_comfort_probing,recovery_ramp,25,0.008314722222,1.3192,1,0.9610616277,1,0.16
+adaptive,pressure_gated_comfort_probing,easy_plateau,20,0.0024375,2.81625,1,0.9970588235,1,0.05
+adaptive,pressure_gated_comfort_probing,hard_burst,10,0.0002166666667,2.2055,1,0.9987654321,1,0
+adaptive,pressure_gated_comfort_probing,easy_recovery,20,0.00353125,2.1825,1,1,1,0.05
+adaptive,pressure_gated_comfort_probing,oscillation,30,0.005105555556,1.331166667,1,0.9693274796,1,0.06666666667
+adaptive,pressure_gated_comfort_probing,final_moderate,10,0.00275,2.076,1,0.98,1,0.1
+adaptive,probing,moderate_warmup,20,0.00695,1.75675,1,0.9547789804,1,0.15
+adaptive,probing,hard_step,25,0.005436666667,1.2016,1,0.960097665,1,0
+adaptive,probing,recovery_ramp,25,0.008707222222,1.2472,1,0.9638438458,1,0.08
+adaptive,probing,easy_plateau,20,0.0060625,1.29425,1,0.9970588235,1,0.05
+adaptive,probing,hard_burst,10,0.0060625,1.307,1,0.925320576,1,0.1
+adaptive,probing,easy_recovery,20,0.005802083333,1.482,1,1,1,0.05
+adaptive,probing,oscillation,30,0.006615277778,1.401833333,1,0.9574148603,1,0.06666666667
+adaptive,probing,final_moderate,10,0.007441666667,1.478,1,0.951350277,1,0.2
+adaptive,residual_guarded_probing,moderate_warmup,20,0.006804166667,1.7745,1,0.9618928015,1,0.15
+adaptive,residual_guarded_probing,hard_step,25,0.006516666667,1.1586,1,0.9456856202,1,0
+adaptive,residual_guarded_probing,recovery_ramp,25,0.009024444444,1.1996,1,0.9683127475,1,0.08
+adaptive,residual_guarded_probing,easy_plateau,20,0.006114583333,1.30775,1,0.9970588235,1,0.05
+adaptive,residual_guarded_probing,hard_burst,10,0.002229166667,1.478,1,0.9856520386,1,0
+adaptive,residual_guarded_probing,easy_recovery,20,0.00378125,1.99525,1,1,1,0.05
+adaptive,residual_guarded_probing,oscillation,30,0.004944444444,1.655833333,1,0.9640720352,1,0.03333333333
+adaptive,residual_guarded_probing,final_moderate,10,0.005925,1.465,1,0.976926055,1,0.1

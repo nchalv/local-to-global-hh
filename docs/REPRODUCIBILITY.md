@@ -25,8 +25,10 @@ The supplementary temporal-controller study is also self-contained:
 ./artifact temporal-controller
 ```
 
-It generates four deterministic difficulty schedules and evaluates the four
-downward-sizing policies documented in `docs/SUPPLEMENTARY_RESULTS.md`.
+It generates one deterministic 160-window workload under fixed round-robin
+placement and evaluates the four downward-sizing policies documented in
+`docs/SUPPLEMENTARY_RESULTS.md`. The run also checks mass, cardinality, static
+difficulty separation, capacity movement, and heavy-hitter recall.
 
 ## CAIDA-dependent reproduction
 

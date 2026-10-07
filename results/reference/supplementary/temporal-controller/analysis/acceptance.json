@@ -1,0 +1,37 @@
+{
+  "checks": {
+    "window_count_160": true,
+    "static_results_cover_all_windows": true,
+    "controller_results_cover_all_windows": true,
+    "constant_mass_120000": true,
+    "constant_cardinality_20000": true,
+    "harder_than_easy_at_qn": true,
+    "q4n_improves_hard_error": true,
+    "every_controller_moves_capacity": true,
+    "controller_recall_at_least_0.999": true
+  },
+  "static": {
+    "qn_hard_error": 0.02682,
+    "qn_easy_error": 0.009958333333333333,
+    "q4n_hard_error": 0.0
+  },
+  "controller_q_over_n_ranges": {
+    "comfort_guided_probing": {
+      "min": 1.0,
+      "max": 4.535
+    },
+    "pressure_gated_comfort_probing": {
+      "min": 1.0,
+      "max": 4.535
+    },
+    "probing": {
+      "min": 1.0,
+      "max": 4.535
+    },
+    "residual_guarded_probing": {
+      "min": 1.0,
+      "max": 4.535
+    }
+  },
+  "minimum_controller_hh_recall": 1.0
+}

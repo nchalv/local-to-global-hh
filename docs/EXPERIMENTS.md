@@ -13,7 +13,7 @@ recreates the long-running CAIDA-dependent matrices.
 | Build and tests | `./artifact test` | No | Build the evaluator and run its unit tests. |
 | Smoke test | `./artifact smoke` | No | Generate a small deterministic stream and validate all principal methods. |
 | Reference evidence | `./artifact verify-results` | No | Verify the integrity of committed CSV and plot outputs. |
-| Controller ablation | `./artifact temporal-controller` | No | Compare four downward-sizing policies under scheduled difficulty changes. |
+| Controller ablation | `./artifact temporal-controller` | No | Compare four downward-sizing policies on one fixed-placement composite workload. |
 | Stage CAIDA | `./artifact prepare-caida` | Yes | Validate and stage the two normalized CAIDA slices. |
 
 The smoke test is the recommended first evaluation. It is not evidence used in
@@ -52,7 +52,8 @@ The artifact deliberately excludes discarded analyses whose methodology or
 design no longer supports the submitted system: ambiguity adjustment,
 single-process insertion-throughput comparisons, standalone obsolete MILP
 baselines, the Twitter workload, and rejected synthetic end-to-end scenarios.
-The controller ablation retains MILP-generated placement changes only as
-controlled synthetic difficulty transitions, not as final comparison
-baselines. Ambiguity adjustment was removed from the final method after it
-failed to provide a consistent resource--quality improvement.
+The controller ablation keeps round-robin placement fixed and changes only the
+global frequency distribution. This isolates temporal control from placement
+effects and requires neither MILP nor external data. Ambiguity adjustment was
+removed from the final method after it failed to provide a consistent
+resource--quality improvement.

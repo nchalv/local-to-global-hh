@@ -1,0 +1,22 @@
+{
+  "seed": 7301,
+  "window_size": 120000,
+  "num_keys": 20000,
+  "n": 200,
+  "m": 20,
+  "output_dir": "generator/generated",
+  "stream_file": "stream_controller_composite_rr_n200_m20.pkl.gz",
+  "summary_file": "summary_controller_composite_rr_n200_m20.pkl.gz",
+  "stream_json_file": "stream_controller_composite_rr_n200_m20.json.gz",
+  "plot_format": "png",
+  "plot_distr": false,
+  "plot_skew": false,
+  "hot_key_drift_pct": 0,
+  "top_n_churn_pct": 0,
+  "max_rel_freq_delta_pct": 100,
+  "new_key_pct": 0,
+  "newborn_hot_birth_prob": 0,
+  "max_hot_newborn_frac": 0,
+  "save_windows_separately": false,
+  "expand_streams": true
+}

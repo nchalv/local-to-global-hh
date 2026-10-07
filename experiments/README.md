@@ -8,9 +8,10 @@ top-level `./artifact` commands rather than invoking these files directly.
 
 - `run_hybrid_ablation.sh`, `summarize_hybrid_ablation.py`, and
   `plot_hybrid_ablation.py`: promoted-head policy selection on CAIDA-A.
-- `run_temporal_controller_ablation.sh`, `summarize_temporal_grid.py`, and
-  `plot_temporal_grid.py`: self-contained controller-policy ablation exposed as
-  `./artifact temporal-controller`.
+- `run_controller_composite_round_robin.sh`,
+  `run_temporal_controller_ablation.sh`, `summarize_temporal_grid.py`, and
+  `analyze_controller_composite.py`: self-contained fixed-placement
+  controller-policy ablation exposed as `./artifact temporal-controller`.
 
 ## End-to-end evaluation
 

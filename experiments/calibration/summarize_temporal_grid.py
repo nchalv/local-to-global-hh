@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarize the Section 8.2.2 temporal-controller ablation."""
+"""Summarize per-window temporal-controller ablation results."""
 
 from __future__ import annotations
 
