@@ -106,6 +106,8 @@ acceptance report. The report verifies the workload dimensions, confirms that
 the hard phase is more difficult than the easy phase at fixed capacity, checks
 that additional capacity reduces hard-phase error, and requires every
 controller to change capacity while retaining heavy-hitter recall.
+The plots identify guarded margin comfort as the selected policy and draw its
+trajectory more prominently than the alternatives.
 
 Run the complete self-contained experiment with:
 

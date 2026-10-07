@@ -24,7 +24,7 @@ MODE_LABELS = {
     "probing": "Bracket probing",
     "residual_guarded_probing": "Guarded bracket probing",
     "pressure_gated_comfort_probing": "Pressure-gated comfort",
-    "comfort_guided_probing": "Guarded margin comfort",
+    "comfort_guided_probing": "Guarded margin comfort (selected)",
 }
 
 MODE_COLORS = {
@@ -191,21 +191,24 @@ def plot_trajectories(
 
     for mode, rows in controller_rows.items():
         windows = [int(number(row, "window")) for row in rows]
+        is_selected = mode == "comfort_guided_probing"
         axes[0].plot(
             windows,
             [normalized_error(row, n) for row in rows],
             color=MODE_COLORS[mode],
-            linewidth=1.5,
+            linewidth=2.3 if is_selected else 1.3,
             label=MODE_LABELS[mode],
-            zorder=3,
+            alpha=1.0 if is_selected else 0.85,
+            zorder=4 if is_selected else 3,
         )
         axes[1].plot(
             windows,
             [number(row, "q_current") / n for row in rows],
             color=MODE_COLORS[mode],
-            linewidth=1.5,
+            linewidth=2.3 if is_selected else 1.3,
             label=MODE_LABELS[mode],
-            zorder=3,
+            alpha=1.0 if is_selected else 0.85,
+            zorder=4 if is_selected else 3,
         )
 
     axes[0].axhline(epsilon_m, color="black", linestyle="--", linewidth=1.0)

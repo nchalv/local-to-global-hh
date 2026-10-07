@@ -6,6 +6,8 @@ This experiment compares four policies for releasing Space-Saving capacity
 after a deployment has accumulated sufficient evidence. All policies use the
 same upward-sizing rule. They differ only in when they probe a lower capacity,
 how they select it, and how failed-probe evidence constrains later reductions.
+Guarded margin comfort is the policy selected for the submitted system. The
+other three policies provide controlled alternatives for this ablation.
 
 ## Controlled workload
 
@@ -27,7 +29,8 @@ data and is generated deterministically from the bundled configuration.
 - `static_baselines.csv`: per-window Space-Saving results at `q=n`, `2n`, and
   `4n`.
 - `controllers/*.csv`: per-window results for bracket probing, guarded bracket
-  probing, pressure-gated comfort probing, and guarded margin comfort.
+  probing, pressure-gated comfort probing, and guarded margin comfort (the
+  selected policy).
 - `controllers/summary.csv`: aggregate controller metrics.
 - `analysis/global_phase_summary.csv`: workload mass, cardinality, and
   threshold populations by phase.
@@ -46,12 +49,13 @@ threshold-normalized error is 0.0268, compared with 0.0100 in the easy phase;
 at `q=4n`, hard-phase error falls to zero. The workload therefore separates
 intrinsic sketch difficulty before any controller comparison.
 
-Guarded margin comfort uses `2.145n` counters on average and obtains the
-lowest aggregate threshold-normalized error (0.00328) and highest F1 (0.987)
-among the adaptive policies, with a 4.4% service-violation rate. Bracket
-probing uses the least capacity (`1.386n`) but accepts more error and service
-violations. The result supports guarded margin comfort as a balanced policy,
-not as an optimizer that dominates every resource metric.
+The selected guarded margin-comfort policy uses `2.145n` counters on average
+and obtains the lowest aggregate threshold-normalized error (0.00328) and
+highest F1 (0.987) among the adaptive policies, with a 4.4%
+service-violation rate. Bracket probing uses the least capacity (`1.386n`) but
+accepts more error and service violations. The result supports guarded margin
+comfort as a balanced policy, not as an optimizer that dominates every
+resource metric.
 
 ## Reproduce
 

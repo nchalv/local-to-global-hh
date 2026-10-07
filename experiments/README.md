@@ -11,7 +11,8 @@ top-level `./artifact` commands rather than invoking these files directly.
 - `run_controller_composite_round_robin.sh`,
   `run_temporal_controller_ablation.sh`, `summarize_temporal_grid.py`, and
   `analyze_controller_composite.py`: self-contained fixed-placement
-  controller-policy ablation exposed as `./artifact temporal-controller`.
+  ablation of the selected guarded margin-comfort controller and three
+  alternatives, exposed as `./artifact temporal-controller`.
 
 ## End-to-end evaluation
 
