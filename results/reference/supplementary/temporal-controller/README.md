@@ -6,7 +6,7 @@ This experiment compares four policies for releasing Space-Saving capacity
 after a deployment has accumulated sufficient evidence. All policies use the
 same upward-sizing rule. They differ only in when they probe a lower capacity,
 how they select it, and how failed-probe evidence constrains later reductions.
-Guarded margin comfort is the policy selected for the submitted system. The
+Guarded margin comfort is the policy selected for the evaluated system. The
 other three policies provide controlled alternatives for this ablation.
 
 ## Controlled workload

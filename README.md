@@ -2,8 +2,8 @@
 
 This repository contains the implementation and reproducibility material for
 deterministic global heavy-hitter inference from bounded partition-local
-summaries. The reviewer path is intentionally separated from long-running
-dataset preparation and full experiment orchestration.
+summaries. A quick-start workflow is separated from long-running dataset
+preparation and full experiment orchestration.
 
 ## Start here
 
@@ -14,7 +14,7 @@ dataset preparation and full experiment orchestration.
 4. Use `docs/REPRODUCIBILITY.md` only when reproducing CAIDA-dependent runs.
 
 The first three steps require no external dataset. The smoke workload is a
-functional check, not a result reported in the paper.
+functional check rather than part of the reported experimental evidence.
 
 ## Contents
 

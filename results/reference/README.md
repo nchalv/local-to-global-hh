@@ -29,8 +29,7 @@ normalized CAIDA inputs described in `docs/DATASETS.md`.
 
 Each bundle contains a README that states the question, inputs, outputs,
 interpretation, and regeneration command. These supplementary diagnostics
-support the submitted evaluation but do not replace the paper's primary
-comparison figures.
+complement the primary comparison results with additional diagnostic detail.
 
 ## Integrity
 

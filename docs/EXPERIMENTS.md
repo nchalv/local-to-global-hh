@@ -5,7 +5,7 @@ software builds and that all principal methods execute. Committed reference
 results support inspection without redistributing CAIDA. Full reproduction
 recreates the long-running CAIDA-dependent matrices.
 
-## Reviewer workflow
+## Recommended workflow
 
 | Stage | Command | External data | Purpose |
 |---|---|---:|---|
@@ -16,13 +16,13 @@ recreates the long-running CAIDA-dependent matrices.
 | Controller ablation | `./artifact temporal-controller` | No | Compare the selected guarded margin-comfort controller with three alternatives. |
 | Stage CAIDA | `./artifact prepare-caida` | Yes | Validate and stage the two normalized CAIDA slices. |
 
-The smoke test is the recommended first evaluation. It is not evidence used in
-the paper; it verifies the complete generator--evaluator--summary path on a
-small bundled configuration.
+The smoke test is the recommended first evaluation. It verifies the complete
+generator--evaluator--summary path on a small bundled configuration, but is
+not part of the reported experimental evidence.
 
-## Primary paper evaluation
+## Primary evaluation
 
-The paper reproduction matrix covers:
+The full reproduction matrix covers:
 
 1. CAIDA-A promoted-head ablation under round-robin placement.
 2. CAIDA-A margin sensitivity for Adaptive Space-Saving and Hybrid.
@@ -36,8 +36,8 @@ and a configuration snapshot beneath `results/runs/`.
 
 ## Retained supplementary evidence
 
-The supplementary matrix retains experiments that improve transparency but
-were omitted from the paper for space:
+The supplementary matrix retains additional experiments that improve
+transparency without being required for the primary result set:
 
 - temporal-controller policy ablations under scheduled difficulty changes;
 - partition-local cardinality and residual-mass diagnostics;
@@ -48,8 +48,8 @@ Ready outputs are ordered and interpreted in `results/reference/README.md`.
 Plot-only regeneration commands are collected in
 `docs/SUPPLEMENTARY_RESULTS.md`.
 
-The artifact deliberately excludes discarded analyses whose methodology or
-design no longer supports the submitted system: ambiguity adjustment,
+The repository deliberately excludes discarded analyses whose methodology or
+design no longer supports the current system: ambiguity adjustment,
 single-process insertion-throughput comparisons, standalone obsolete MILP
 baselines, the Twitter workload, and rejected synthetic end-to-end scenarios.
 The controller ablation keeps round-robin placement fixed and changes only the

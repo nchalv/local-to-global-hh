@@ -1,8 +1,8 @@
 # Experiment Tools
 
 This directory contains the retained benchmark drivers and the scripts that
-summarize or visualize their output. Reviewers should normally use the
-top-level `./artifact` commands rather than invoking these files directly.
+summarize or visualize their output. Start with the top-level `./artifact`
+commands unless a specific internal stage needs to be run directly.
 
 ## Calibration
 
@@ -30,5 +30,5 @@ help and by `docs/SUPPLEMENTARY_RESULTS.md`. Generated outputs belong under
 `results/runs/`; generated streams belong under `generated/runs/`.
 
 Historical configuration files are retained where an active driver still
-references them, but rejected experiment families are not part of the reviewer
-workflow described above.
+references them. Deprecated or exploratory experiment families are not part
+of the documented workflow above.
